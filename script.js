@@ -1165,77 +1165,353 @@ async function removeBackground() {
           (sum, c) => sum + c[2],
           0
         ) / samples.length
+
+/* =========================================================
+   AI BACKGROUND REMOVER
+   ========================================================= */
+
+let aiBgImage = null;
+let aiBgFile = null;
+let aiSegmenter = null;
+
+async function backgroundTool() {
+  openModal(`
+    <h2 class="modal-title">AI Background Remover</h2>
+
+    <p class="modal-sub">
+      AI detects the person and removes the background in your browser.
+    </p>
+
+    ${picker()}
+
+    <div id="workArea"></div>
+  `);
+
+  $("#fileInput").onchange = e => {
+    const f = e.target.files[0];
+
+    if (!f) return;
+
+    if (!f.type.startsWith("image/")) {
+      status("Please choose an image.");
+      return;
+    }
+
+    aiBgFile = f;
+
+    const url =
+      URL.createObjectURL(f);
+
+    aiBgImage =
+      new Image();
+
+    aiBgImage.onload = () => {
+      URL.revokeObjectURL(url);
+      aiBackgroundControls();
+    };
+
+    aiBgImage.onerror = () => {
+      URL.revokeObjectURL(url);
+      status("Chrome could not read this image.");
+    };
+
+    aiBgImage.src = url;
+  };
+}
+
+function aiBackgroundControls() {
+  $("#workArea").innerHTML = `
+    <div class="stats">
+
+      <div class="stat">
+        <b>${aiBgImage.naturalWidth}</b>
+        <small>Width</small>
+      </div>
+
+      <div class="stat">
+        <b>${aiBgImage.naturalHeight}</b>
+        <small>Height</small>
+      </div>
+
+      <div class="stat">
+        <b>${bytes(aiBgFile.size)}</b>
+        <small>Original</small>
+      </div>
+
+    </div>
+
+    <img
+      class="preview"
+      src="${aiBgImage.src}"
+      alt="Original photo"
+    >
+
+    <div class="status" id="aiBgStatus">
+      Ready.
+    </div>
+
+    <div class="actions">
+
+      <button
+        class="primary-action"
+        id="aiRemoveBgBtn">
+        Remove Background
+      </button>
+
+      <button
+        class="secondary-action"
+        id="aiBgReplaceBtn">
+        Choose another
+      </button>
+
+    </div>
+
+    <div id="result"></div>
+  `;
+
+  $("#aiRemoveBgBtn").onclick =
+    removeAIBackground;
+
+  $("#aiBgReplaceBtn").onclick =
+    () => $("#fileInput").click();
+}
+
+async function loadAISegmenter() {
+
+  if (aiSegmenter)
+    return aiSegmenter;
+
+  $("#aiBgStatus").textContent =
+    "Loading AI model...";
+
+  try {
+
+    const model =
+      bodySegmentation.SupportedModels
+        .MediaPipeSelfieSegmentation;
+
+    aiSegmenter =
+      await bodySegmentation.createSegmenter(
+        model,
+        {
+          runtime: "mediapipe",
+
+          modelType: "general",
+
+          solutionPath:
+            "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation"
+        }
       );
 
+    return aiSegmenter;
+
+  } catch (e) {
+
+    aiSegmenter = null;
+
+    throw new Error(
+      "AI model could not load."
+    );
+  }
+}
+
+async function removeAIBackground() {
+
+  busy(
+    "aiRemoveBgBtn",
+    true,
+    "AI processing..."
+  );
+
+  try {
+
+    const segmenter =
+      await loadAISegmenter();
+
+    $("#aiBgStatus").textContent =
+      "AI is detecting the person...";
+
     /*
-      Convert tolerance to color distance.
+      Resize very large images for faster
+      mobile processing.
     */
 
-    const threshold =
-      35 + tolerance * 2.2;
+    const maxSize = 1800;
+
+    const scale =
+      Math.min(
+        1,
+        maxSize /
+          Math.max(
+            aiBgImage.naturalWidth,
+            aiBgImage.naturalHeight
+          )
+      );
+
+    const w =
+      Math.max(
+        1,
+        Math.round(
+          aiBgImage.naturalWidth *
+          scale
+        )
+      );
+
+    const h =
+      Math.max(
+        1,
+        Math.round(
+          aiBgImage.naturalHeight *
+          scale
+        )
+      );
+
+    const sourceCanvas =
+      document.createElement("canvas");
+
+    sourceCanvas.width = w;
+    sourceCanvas.height = h;
+
+    const sourceCtx =
+      sourceCanvas.getContext("2d");
+
+    sourceCtx.drawImage(
+      aiBgImage,
+      0,
+      0,
+      w,
+      h
+    );
+
+    /*
+      Run AI segmentation.
+    */
+
+    const people =
+      await segmenter.segmentPeople(
+        sourceCanvas
+      );
+
+    if (
+      !people ||
+      !people.length
+    ) {
+      throw new Error(
+        "No person was detected."
+      );
+    }
+
+    $("#aiBgStatus").textContent =
+      "Creating transparent PNG...";
+
+    /*
+      Get segmentation mask.
+    */
+
+    const mask =
+      await bodySegmentation.toBinaryMask(
+        people,
+        {
+          r: 0,
+          g: 0,
+          b: 0,
+          a: 255
+        },
+        {
+          r: 0,
+          g: 0,
+          b: 0,
+          a: 0
+        },
+        false,
+        0.55
+      );
+
+    const outputCanvas =
+      document.createElement("canvas");
+
+    outputCanvas.width = w;
+    outputCanvas.height = h;
+
+    const outputCtx =
+      outputCanvas.getContext("2d");
+
+    /*
+      Draw original image.
+    */
+
+    outputCtx.drawImage(
+      sourceCanvas,
+      0,
+      0
+    );
+
+    /*
+      Apply the segmentation mask.
+    */
+
+    const imageData =
+      outputCtx.getImageData(
+        0,
+        0,
+        w,
+        h
+      );
+
+    const maskData =
+      mask.data;
+
+    const data =
+      imageData.data;
+
+    /*
+      The mask contains alpha information.
+      Keep the detected person,
+      remove the background.
+    */
 
     for (
       let i = 0;
       i < data.length;
       i += 4
     ) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
 
-      const distance =
-        Math.sqrt(
-          Math.pow(r - bgR, 2) +
-          Math.pow(g - bgG, 2) +
-          Math.pow(b - bgB, 2)
-        );
+      const maskAlpha =
+        maskData[i + 3];
 
-      if (distance < threshold) {
-        /*
-          Soft edge instead of immediately
-          making everything completely transparent.
-        */
-
-        const alpha =
-          Math.max(
-            0,
-            Math.min(
-              255,
-              Math.round(
-                ((distance /
-                  threshold) * 255)
-              )
-            )
-          );
-
-        data[i + 3] = alpha;
-      }
+      data[i + 3] =
+        maskAlpha;
     }
 
-    ctx.putImageData(
+    outputCtx.putImageData(
       imageData,
       0,
       0
     );
 
+    /*
+      Convert to PNG.
+    */
+
     const blob =
       await blobFromCanvas(
-        canvas,
+        outputCanvas,
         "image/png"
       );
 
     const name =
-      base(bgFile.name) +
-      "-no-background.png";
+      base(aiBgFile.name) +
+      "-background-removed.png";
 
-    download(
-      blob,
-      name
-    );
+    const resultUrl =
+      URL.createObjectURL(blob);
 
-    $("#bgPreview").innerHTML = `
+    $("#aiBgStatus").textContent =
+      "Background removed successfully.";
+
+    $("#result").innerHTML = `
       <div class="status">
-        Background removed.
+        <strong>AI result</strong>
       </div>
 
       <div style="
@@ -1248,32 +1524,41 @@ async function removeBackground() {
             #fff 0 50%
           ) 50% / 20px 20px;
       ">
+
         <img
           class="preview"
-          src="${URL.createObjectURL(blob)}"
-          alt="Background removed result"
+          src="${resultUrl}"
+          alt="AI background removed result"
         >
+
       </div>
     `;
 
-    result(
-      "Transparent PNG created.",
-      blob
+    download(
+      blob,
+      name
+    );
+
+    busy(
+      "aiRemoveBgBtn",
+      false,
+      "Remove Background"
     );
 
   } catch (e) {
+
     status(
-      "Background removal failed. Try another image."
+      e.message ||
+      "AI background removal failed."
+    );
+
+    busy(
+      "aiRemoveBgBtn",
+      false,
+      "Remove Background"
     );
   }
-
-  busy(
-    "removeBgBtn",
-    false,
-    "Remove Background"
-  );
 }
-
 
 /* =========================================================
    DSLR LOOK / PHOTO ENHANCER
