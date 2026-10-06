@@ -929,3 +929,1144 @@ async function copy(text) {
     status("Copy was blocked by Chrome.");
   }
 }
+/* =========================================================
+   BACKGROUND REMOVER
+   ========================================================= */
+
+let bgImage = null;
+let bgFile = null;
+
+function backgroundTool() {
+  openModal(`
+    <h2 class="modal-title">Background Remover</h2>
+
+    <p class="modal-sub">
+      Remove a simple, similar-color background and create a transparent PNG.
+      Processing happens in your browser.
+    </p>
+
+    ${picker()}
+
+    <div id="workArea"></div>
+  `);
+
+  $("#fileInput").onchange = e => {
+    const f = e.target.files[0];
+
+    if (!f) return;
+
+    if (!f.type.startsWith("image/")) {
+      status("Please choose an image.");
+      return;
+    }
+
+    bgFile = f;
+
+    const url = URL.createObjectURL(f);
+    bgImage = new Image();
+
+    bgImage.onload = () => {
+      URL.revokeObjectURL(url);
+      backgroundControls();
+    };
+
+    bgImage.onerror = () => {
+      URL.revokeObjectURL(url);
+      status("Chrome could not read this image.");
+    };
+
+    bgImage.src = url;
+  };
+}
+
+function backgroundControls() {
+  $("#workArea").innerHTML = `
+    <div class="stats">
+      <div class="stat">
+        <b>${bgImage.naturalWidth}</b>
+        <small>Width</small>
+      </div>
+
+      <div class="stat">
+        <b>${bgImage.naturalHeight}</b>
+        <small>Height</small>
+      </div>
+
+      <div class="stat">
+        <b>${bytes(bgFile.size)}</b>
+        <small>Original</small>
+      </div>
+    </div>
+
+    <div class="control">
+      <label>
+        <span>Background tolerance</span>
+        <span id="bgToleranceValue">35</span>
+      </label>
+
+      <input
+        id="bgTolerance"
+        type="range"
+        min="5"
+        max="100"
+        value="35"
+      >
+    </div>
+
+    <div class="status">
+      Best results usually happen when the background has a similar
+      color, such as white, blue or green.
+    </div>
+
+    <div id="bgPreview"></div>
+
+    <div class="actions">
+      <button class="primary-action" id="removeBgBtn">
+        Remove Background
+      </button>
+
+      <button class="secondary-action" id="bgReplaceBtn">
+        Choose another
+      </button>
+    </div>
+
+    <div id="result"></div>
+  `;
+
+  $("#bgTolerance").oninput = e => {
+    $("#bgToleranceValue").textContent = e.target.value;
+  };
+
+  $("#removeBgBtn").onclick = removeBackground;
+
+  $("#bgReplaceBtn").onclick = () =>
+    $("#fileInput").click();
+
+  showBackgroundPreview();
+}
+
+function showBackgroundPreview() {
+  $("#bgPreview").innerHTML = `
+    <img
+      class="preview"
+      src="${bgImage.src}"
+      alt="Background remover preview"
+    >
+  `;
+}
+
+async function removeBackground() {
+  busy(
+    "removeBgBtn",
+    true,
+    "Removing..."
+  );
+
+  try {
+    const tolerance =
+      Number($("#bgTolerance").value);
+
+    const maxSize = 2400;
+
+    const scale = Math.min(
+      1,
+      maxSize /
+        Math.max(
+          bgImage.naturalWidth,
+          bgImage.naturalHeight
+        )
+    );
+
+    const w = Math.max(
+      1,
+      Math.round(bgImage.naturalWidth * scale)
+    );
+
+    const h = Math.max(
+      1,
+      Math.round(bgImage.naturalHeight * scale)
+    );
+
+    const canvas =
+      document.createElement("canvas");
+
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx =
+      canvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+    ctx.drawImage(
+      bgImage,
+      0,
+      0,
+      w,
+      h
+    );
+
+    const imageData =
+      ctx.getImageData(
+        0,
+        0,
+        w,
+        h
+      );
+
+    const data = imageData.data;
+
+    /*
+      Estimate the background color from
+      the four corners of the image.
+    */
+
+    const samples = [];
+
+    const points = [
+      [0, 0],
+      [w - 1, 0],
+      [0, h - 1],
+      [w - 1, h - 1]
+    ];
+
+    for (const [x, y] of points) {
+      const i =
+        (y * w + x) * 4;
+
+      samples.push([
+        data[i],
+        data[i + 1],
+        data[i + 2]
+      ]);
+    }
+
+    const bgR =
+      Math.round(
+        samples.reduce(
+          (sum, c) => sum + c[0],
+          0
+        ) / samples.length
+      );
+
+    const bgG =
+      Math.round(
+        samples.reduce(
+          (sum, c) => sum + c[1],
+          0
+        ) / samples.length
+      );
+
+    const bgB =
+      Math.round(
+        samples.reduce(
+          (sum, c) => sum + c[2],
+          0
+        ) / samples.length
+      );
+
+    /*
+      Convert tolerance to color distance.
+    */
+
+    const threshold =
+      35 + tolerance * 2.2;
+
+    for (
+      let i = 0;
+      i < data.length;
+      i += 4
+    ) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+
+      const distance =
+        Math.sqrt(
+          Math.pow(r - bgR, 2) +
+          Math.pow(g - bgG, 2) +
+          Math.pow(b - bgB, 2)
+        );
+
+      if (distance < threshold) {
+        /*
+          Soft edge instead of immediately
+          making everything completely transparent.
+        */
+
+        const alpha =
+          Math.max(
+            0,
+            Math.min(
+              255,
+              Math.round(
+                ((distance /
+                  threshold) * 255)
+              )
+            )
+          );
+
+        data[i + 3] = alpha;
+      }
+    }
+
+    ctx.putImageData(
+      imageData,
+      0,
+      0
+    );
+
+    const blob =
+      await blobFromCanvas(
+        canvas,
+        "image/png"
+      );
+
+    const name =
+      base(bgFile.name) +
+      "-no-background.png";
+
+    download(
+      blob,
+      name
+    );
+
+    $("#bgPreview").innerHTML = `
+      <div class="status">
+        Background removed.
+      </div>
+
+      <div style="
+        margin:15px 0;
+        padding:10px;
+        border-radius:14px;
+        background:
+          repeating-conic-gradient(
+            #ddd 0 25%,
+            #fff 0 50%
+          ) 50% / 20px 20px;
+      ">
+        <img
+          class="preview"
+          src="${URL.createObjectURL(blob)}"
+          alt="Background removed result"
+        >
+      </div>
+    `;
+
+    result(
+      "Transparent PNG created.",
+      blob
+    );
+
+  } catch (e) {
+    status(
+      "Background removal failed. Try another image."
+    );
+  }
+
+  busy(
+    "removeBgBtn",
+    false,
+    "Remove Background"
+  );
+}
+
+
+/* =========================================================
+   DSLR LOOK / PHOTO ENHANCER
+   ========================================================= */
+
+let enhanceImage = null;
+let enhanceFile = null;
+
+function enhanceTool() {
+  openModal(`
+    <h2 class="modal-title">DSLR Look</h2>
+
+    <p class="modal-sub">
+      Enhance your photo with sharper detail,
+      richer colors, contrast and a natural camera-like finish.
+    </p>
+
+    ${picker()}
+
+    <div id="workArea"></div>
+  `);
+
+  $("#fileInput").onchange = e => {
+    const f = e.target.files[0];
+
+    if (!f) return;
+
+    if (!f.type.startsWith("image/")) {
+      status("Please choose an image.");
+      return;
+    }
+
+    enhanceFile = f;
+
+    const url =
+      URL.createObjectURL(f);
+
+    enhanceImage =
+      new Image();
+
+    enhanceImage.onload = () => {
+      URL.revokeObjectURL(url);
+      enhanceControls();
+    };
+
+    enhanceImage.onerror = () => {
+      URL.revokeObjectURL(url);
+      status("Chrome could not read this image.");
+    };
+
+    enhanceImage.src = url;
+  };
+}
+
+function enhanceControls() {
+  $("#workArea").innerHTML = `
+    ${infoForEnhance()}
+
+    <div class="control">
+      <label>Preset</label>
+
+      <select id="enhancePreset">
+        <option value="natural">Natural DSLR</option>
+        <option value="vivid">Vivid Camera</option>
+        <option value="cinematic">Cinematic</option>
+        <option value="portrait">Portrait</option>
+        <option value="none">Manual</option>
+      </select>
+    </div>
+
+    <div class="control">
+      <label>
+        <span>Brightness</span>
+        <span id="enhBrightValue">4</span>
+      </label>
+
+      <input
+        id="enhBright"
+        type="range"
+        min="-30"
+        max="30"
+        value="4"
+      >
+    </div>
+
+    <div class="control">
+      <label>
+        <span>Contrast</span>
+        <span id="enhContrastValue">12</span>
+      </label>
+
+      <input
+        id="enhContrast"
+        type="range"
+        min="-30"
+        max="40"
+        value="12"
+      >
+    </div>
+
+    <div class="control">
+      <label>
+        <span>Saturation</span>
+        <span id="enhSatValue">8</span>
+      </label>
+
+      <input
+        id="enhSat"
+        type="range"
+        min="-30"
+        max="40"
+        value="8"
+      >
+    </div>
+
+    <div class="control">
+      <label>
+        <span>Sharpness</span>
+        <span id="enhSharpValue">18</span>
+      </label>
+
+      <input
+        id="enhSharp"
+        type="range"
+        min="0"
+        max="40"
+        value="18"
+      >
+    </div>
+
+    <div class="control">
+      <label>
+        <span>Warmth</span>
+        <span id="enhWarmValue">2</span>
+      </label>
+
+      <input
+        id="enhWarm"
+        type="range"
+        min="-20"
+        max="20"
+        value="2"
+      >
+    </div>
+
+    <div class="control">
+      <label>
+        <span>Vignette</span>
+        <span id="enhVignetteValue">8</span>
+      </label>
+
+      <input
+        id="enhVignette"
+        type="range"
+        min="0"
+        max="40"
+        value="8"
+      >
+    </div>
+
+    <div id="enhancePreview"></div>
+
+    <div class="actions">
+      <button
+        class="primary-action"
+        id="enhanceBtn"
+      >
+        Apply DSLR Look
+      </button>
+
+      <button
+        class="secondary-action"
+        id="enhReplaceBtn"
+      >
+        Choose another
+      </button>
+    </div>
+
+    <div id="result"></div>
+  `;
+
+  const controls = [
+    ["enhBright", "enhBrightValue"],
+    ["enhContrast", "enhContrastValue"],
+    ["enhSat", "enhSatValue"],
+    ["enhSharp", "enhSharpValue"],
+    ["enhWarm", "enhWarmValue"],
+    ["enhVignette", "enhVignetteValue"]
+  ];
+
+  controls.forEach(([input, value]) => {
+    $("#" + input).oninput = () => {
+      $("#" + value).textContent =
+        $("#" + input).value;
+    };
+  });
+
+  $("#enhancePreset").onchange =
+    applyEnhancePreset;
+
+  $("#enhanceBtn").onclick =
+    enhancePhoto;
+
+  $("#enhReplaceBtn").onclick =
+    () => $("#fileInput").click();
+
+  showOriginalEnhancePreview();
+}
+
+function infoForEnhance() {
+  return `
+    <div class="stats">
+      <div class="stat">
+        <b>${enhanceImage.naturalWidth}</b>
+        <small>Width</small>
+      </div>
+
+      <div class="stat">
+        <b>${enhanceImage.naturalHeight}</b>
+        <small>Height</small>
+      </div>
+
+      <div class="stat">
+        <b>${bytes(enhanceFile.size)}</b>
+        <small>Original</small>
+      </div>
+    </div>
+  `;
+}
+
+function showOriginalEnhancePreview() {
+  $("#enhancePreview").innerHTML = `
+    <img
+      class="preview"
+      src="${enhanceImage.src}"
+      alt="Original photo"
+    >
+
+    <div class="status">
+      Original photo
+    </div>
+  `;
+}
+
+function applyEnhancePreset() {
+  const preset =
+    $("#enhancePreset").value;
+
+  const presets = {
+    natural: {
+      bright: 4,
+      contrast: 12,
+      sat: 8,
+      sharp: 18,
+      warm: 2,
+      vignette: 8
+    },
+
+    vivid: {
+      bright: 5,
+      contrast: 16,
+      sat: 20,
+      sharp: 22,
+      warm: 3,
+      vignette: 6
+    },
+
+    cinematic: {
+      bright: 0,
+      contrast: 20,
+      sat: -2,
+      sharp: 16,
+      warm: -2,
+      vignette: 18
+    },
+
+    portrait: {
+      bright: 7,
+      contrast: 8,
+      sat: 5,
+      sharp: 12,
+      warm: 5,
+      vignette: 10
+    },
+
+    none: {
+      bright: 0,
+      contrast: 0,
+      sat: 0,
+      sharp: 0,
+      warm: 0,
+      vignette: 0
+    }
+  };
+
+  const p =
+    presets[preset];
+
+  if (!p) return;
+
+  setEnhValue(
+    "enhBright",
+    "enhBrightValue",
+    p.bright
+  );
+
+  setEnhValue(
+    "enhContrast",
+    "enhContrastValue",
+    p.contrast
+  );
+
+  setEnhValue(
+    "enhSat",
+    "enhSatValue",
+    p.sat
+  );
+
+  setEnhValue(
+    "enhSharp",
+    "enhSharpValue",
+    p.sharp
+  );
+
+  setEnhValue(
+    "enhWarm",
+    "enhWarmValue",
+    p.warm
+  );
+
+  setEnhValue(
+    "enhVignette",
+    "enhVignetteValue",
+    p.vignette
+  );
+}
+
+function setEnhValue(
+  input,
+  output,
+  value
+) {
+  $("#" + input).value = value;
+  $("#" + output).textContent = value;
+}
+
+async function enhancePhoto() {
+  busy(
+    "enhanceBtn",
+    true,
+    "Enhancing..."
+  );
+
+  try {
+    const maxSize = 3000;
+
+    const scale = Math.min(
+      1,
+      maxSize /
+        Math.max(
+          enhanceImage.naturalWidth,
+          enhanceImage.naturalHeight
+        )
+    );
+
+    const w = Math.max(
+      1,
+      Math.round(
+        enhanceImage.naturalWidth *
+        scale
+      )
+    );
+
+    const h = Math.max(
+      1,
+      Math.round(
+        enhanceImage.naturalHeight *
+        scale
+      )
+    );
+
+    const canvas =
+      document.createElement("canvas");
+
+    canvas.width = w;
+    canvas.height = h;
+
+    const ctx =
+      canvas.getContext(
+        "2d",
+        {
+          willReadFrequently: true
+        }
+      );
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+    ctx.drawImage(
+      enhanceImage,
+      0,
+      0,
+      w,
+      h
+    );
+
+    let imageData =
+      ctx.getImageData(
+        0,
+        0,
+        w,
+        h
+      );
+
+    const bright =
+      Number($("#enhBright").value);
+
+    const contrast =
+      Number($("#enhContrast").value);
+
+    const saturation =
+      Number($("#enhSat").value);
+
+    const sharp =
+      Number($("#enhSharp").value);
+
+    const warmth =
+      Number($("#enhWarm").value);
+
+    const vignette =
+      Number($("#enhVignette").value);
+
+    applyColorEnhancement(
+      imageData,
+      bright,
+      contrast,
+      saturation,
+      warmth,
+      vignette
+    );
+
+    ctx.putImageData(
+      imageData,
+      0,
+      0
+    );
+
+    if (sharp > 0) {
+      imageData =
+        sharpenImage(
+          ctx,
+          w,
+          h,
+          sharp
+        );
+
+      ctx.putImageData(
+        imageData,
+        0,
+        0
+      );
+    }
+
+    const blob =
+      await blobFromCanvas(
+        canvas,
+        "image/jpeg",
+        0.94
+      );
+
+    const name =
+      base(enhanceFile.name) +
+      "-dslr-look.jpg";
+
+    const resultUrl =
+      URL.createObjectURL(blob);
+
+    $("#enhancePreview").innerHTML = `
+      <div style="margin-bottom:10px">
+        <strong>Before</strong>
+      </div>
+
+      <img
+        class="preview"
+        src="${enhanceImage.src}"
+        alt="Before enhancement"
+      >
+
+      <div style="
+        margin:20px 0 10px
+      ">
+        <strong>After — DSLR Look</strong>
+      </div>
+
+      <img
+        class="preview"
+        src="${resultUrl}"
+        alt="Enhanced photo"
+      >
+    `;
+
+    download(
+      blob,
+      name
+    );
+
+    result(
+      "DSLR-style photo created.",
+      blob
+    );
+
+  } catch (e) {
+    status(
+      "Photo enhancement failed. Try a smaller image."
+    );
+  }
+
+  busy(
+    "enhanceBtn",
+    false,
+    "Apply DSLR Look"
+  );
+}
+
+function applyColorEnhancement(
+  imageData,
+  brightness,
+  contrast,
+  saturation,
+  warmth,
+  vignette
+) {
+  const data =
+    imageData.data;
+
+  const w =
+    imageData.width;
+
+  const h =
+    imageData.height;
+
+  const brightnessAmount =
+    brightness * 2.55;
+
+  const contrastFactor =
+    (259 * (contrast + 255)) /
+    (255 * (259 - contrast));
+
+  const saturationFactor =
+    1 + saturation / 100;
+
+  const warmthAmount =
+    warmth * 1.5;
+
+  const cx =
+    w / 2;
+
+  const cy =
+    h / 2;
+
+  const maxDistance =
+    Math.sqrt(
+      cx * cx +
+      cy * cy
+    );
+
+  for (
+    let y = 0;
+    y < h;
+    y++
+  ) {
+    for (
+      let x = 0;
+      x < w;
+      x++
+    ) {
+      const i =
+        (y * w + x) * 4;
+
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
+
+      /*
+        Brightness
+      */
+
+      r += brightnessAmount;
+      g += brightnessAmount;
+      b += brightnessAmount;
+
+      /*
+        Contrast
+      */
+
+      r =
+        contrastFactor *
+        (r - 128) +
+        128;
+
+      g =
+        contrastFactor *
+        (g - 128) +
+        128;
+
+      b =
+        contrastFactor *
+        (b - 128) +
+        128;
+
+      /*
+        Saturation
+      */
+
+      const gray =
+        0.299 * r +
+        0.587 * g +
+        0.114 * b;
+
+      r =
+        gray +
+        (r - gray) *
+        saturationFactor;
+
+      g =
+        gray +
+        (g - gray) *
+        saturationFactor;
+
+      b =
+        gray +
+        (b - gray) *
+        saturationFactor;
+
+      /*
+        Warmth
+      */
+
+      r += warmthAmount;
+      b -= warmthAmount;
+
+      /*
+        Soft vignette
+      */
+
+      if (vignette > 0) {
+        const dx =
+          x - cx;
+
+        const dy =
+          y - cy;
+
+        const distance =
+          Math.sqrt(
+            dx * dx +
+            dy * dy
+          ) /
+          maxDistance;
+
+        const edge =
+          Math.max(
+            0,
+            distance - 0.35
+          ) / 0.65;
+
+        const factor =
+          1 -
+          (edge * edge) *
+          (vignette / 100);
+
+        r *= factor;
+        g *= factor;
+        b *= factor;
+      }
+
+      data[i] =
+        clamp255(r);
+
+      data[i + 1] =
+        clamp255(g);
+
+      data[i + 2] =
+        clamp255(b);
+    }
+  }
+}
+
+function sharpenImage(
+  ctx,
+  w,
+  h,
+  amount
+) {
+  const source =
+    ctx.getImageData(
+      0,
+      0,
+      w,
+      h
+    );
+
+  const output =
+    ctx.createImageData(
+      w,
+      h
+    );
+
+  const src =
+    source.data;
+
+  const dst =
+    output.data;
+
+  const strength =
+    Math.min(
+      0.45,
+      amount / 100
+    );
+
+  /*
+    3x3 unsharp-style sharpening.
+  */
+
+  for (
+    let y = 0;
+    y < h;
+    y++
+  ) {
+    for (
+      let x = 0;
+      x < w;
+      x++
+    ) {
+      const i =
+        (y * w + x) * 4;
+
+      const left =
+        ((y * w) +
+          Math.max(0, x - 1)) *
+        4;
+
+      const right =
+        ((y * w) +
+          Math.min(w - 1, x + 1)) *
+        4;
+
+      const top =
+        ((Math.max(0, y - 1) * w) +
+          x) *
+        4;
+
+      const bottom =
+        ((Math.min(h - 1, y + 1) * w) +
+          x) *
+        4;
+
+      for (
+        let c = 0;
+        c < 3;
+        c++
+      ) {
+        const center =
+          src[i + c];
+
+        const average =
+          (
+            src[left + c] +
+            src[right + c] +
+            src[top + c] +
+            src[bottom + c]
+          ) / 4;
+
+        dst[i + c] =
+          clamp255(
+            center +
+            (center - average) *
+            strength *
+            2.2
+          );
+      }
+
+      dst[i + 3] =
+        src[i + 3];
+    }
+  }
+
+  return output;
+}
+
+function clamp255(n) {
+  return Math.max(
+    0,
+    Math.min(
+      255,
+      Math.round(n)
+    )
+  );
+      }
