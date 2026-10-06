@@ -48,6 +48,8 @@ $$(".tool-btn").forEach(btn => {
     else if (a === "text") textTool(btn.dataset.textTool);
     else if (a === "password") passwordTool();
     else if (a === "calculator") calculatorTool();
+    else if (a === "background") backgroundTool();
+    else if (a === "enhance") enhanceTool();
   };
 });
 
