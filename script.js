@@ -6,6 +6,8 @@ const modalContent = $("#modalContent");
 const search = $("#toolSearch");
 const count = $("#toolCount");
 
+count.textContent = `${$$(".tool-card").length} tools`;
+
 $("#year").textContent = new Date().getFullYear();
 
 if (localStorage.getItem("filefox-theme") === "dark")
