@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FileFox - free online image and text tools.">
+  <title>FileFox — Free Online Tools</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="nav">
+    <a class="brand" href="#">
+      <span class="brand-icon">F</span>
+      FileFox
+    </a>
+
+    <nav>
+      <a href="#tools">Tools</a>
+      <a href="#popular">Popular</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+
+    <button id="themeBtn" class="icon-btn" aria-label="Change theme">
+      ◐
+    </button>
+  </div>
+</header>
+
+
+<main>
+
+<section class="hero">
+  <div class="hero-inner">
+
+    <div class="badge">
+      Free • Fast • Private
+    </div>
+
+    <h1>
+      Powerful file tools.<br>
+      <span>Right in your browser.</span>
+    </h1>
+
+    <p>
+      Convert, compress, resize images and work with text
+      without installing complicated software.
+    </p>
+
+    <div class="search-box">
+      <span>⌕</span>
+      <input
+        id="toolSearch"
+        type="search"
+        placeholder="Search a tool..."
+        autocomplete="off"
+      >
+    </div>
+
+    <div class="tool-count" id="toolCount">
+      15 tools
+    </div>
+
+  </div>
+</section>
+
+
+<section id="tools" class="section">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">ALL TOOLS</span>
+      <h2>Everything you need</h2>
+    </div>
+  </div>
+
+
+  <div class="tool-grid">
+
+
+    <article class="tool-card"
+      data-search="jpg jpeg png image convert photo">
+
+      <div class="tool-icon">🖼️</div>
+
+      <h3>JPG to PNG</h3>
+
+      <p>Convert JPG images into PNG files.</p>
+
+      <button
+        class="tool-btn"
+        data-action="image"
+        data-type="jpg-png">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="png jpg image convert photo">
+
+      <div class="tool-icon">🌄</div>
+
+      <h3>PNG to JPG</h3>
+
+      <p>Convert PNG images into JPG files.</p>
+
+      <button
+        class="tool-btn"
+        data-action="image"
+        data-type="png-jpg">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="jpg webp image convert">
+
+      <div class="tool-icon">⚡</div>
+
+      <h3>JPG to WebP</h3>
+
+      <p>Create smaller modern WebP images.</p>
+
+      <button
+        class="tool-btn"
+        data-action="image"
+        data-type="jpg-webp">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="png webp image convert">
+
+      <div class="tool-icon">✨</div>
+
+      <h3>PNG to WebP</h3>
+
+      <p>Convert PNG images to WebP.</p>
+
+      <button
+        class="tool-btn"
+        data-action="image"
+        data-type="png-webp">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="webp jpg image convert">
+
+      <div class="tool-icon">🔄</div>
+
+      <h3>WebP to JPG</h3>
+
+      <p>Convert WebP images to JPG.</p>
+
+      <button
+        class="tool-btn"
+        data-action="image"
+        data-type="webp-jpg">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="webp png image convert">
+
+      <div class="tool-icon">🔁</div>
+
+      <h3>WebP to PNG</h3>
+
+      <p>Convert WebP images to PNG.</p>
+
+      <button
+        class="tool-btn"
+        data-action="image"
+        data-type="webp-png">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="compress image reduce size photo">
+
+      <div class="tool-icon">📦</div>
+
+      <h3>Image Compressor</h3>
+
+      <p>Reduce image size while keeping good quality.</p>
+
+      <button
+        class="tool-btn"
+        data-action="compress">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="resize image photo width height">
+
+      <div class="tool-icon">↔️</div>
+
+      <h3>Image Resizer</h3>
+
+      <p>Resize images to your preferred width.</p>
+
+      <button
+        class="tool-btn"
+        data-action="resize">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="image pdf convert">
+
+      <div class="tool-icon">📄</div>
+
+      <h3>Image to PDF</h3>
+
+      <p>Turn an image into a printable PDF.</p>
+
+      <button
+        class="tool-btn"
+        data-action="pdf">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="qr qr code generator">
+
+      <div class="tool-icon">▦</div>
+
+      <h3>QR Code Generator</h3>
+
+      <p>Create a QR code from text or a website.</p>
+
+      <button
+        class="tool-btn"
+        data-action="qr">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="word counter words characters text">
+
+      <div class="tool-icon">🔢</div>
+
+      <h3>Word Counter</h3>
+
+      <p>Count words and characters instantly.</p>
+
+      <button
+        class="tool-btn"
+        data-action="text"
+        data-text-tool="counter">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="case converter uppercase lowercase text">
+
+      <div class="tool-icon">Aa</div>
+
+      <h3>Case Converter</h3>
+
+      <p>Convert text to uppercase, lowercase or title case.</p>
+
+      <button
+        class="tool-btn"
+        data-action="text"
+        data-text-tool="case">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="clean text remove spaces">
+
+      <div class="tool-icon">🧹</div>
+
+      <h3>Text Cleaner</h3>
+
+      <p>Remove unnecessary spaces and blank lines.</p>
+
+      <button
+        class="tool-btn"
+        data-action="text"
+        data-text-tool="clean">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="password random secure generator">
+
+      <div class="tool-icon">🔐</div>
+
+      <h3>Password Generator</h3>
+
+      <p>Generate random passwords in your browser.</p>
+
+      <button
+        class="tool-btn"
+        data-action="password">
+        Use tool →
+      </button>
+
+    </article>
+
+
+    <article class="tool-card"
+      data-search="calculator math calculate">
+
+      <div class="tool-icon">🧮</div>
+
+      <h3>Quick Calculator</h3>
+
+      <p>Calculate everyday mathematical expressions.</p>
+
+      <button
+        class="tool-btn"
+        data-action="calculator">
+        Use tool →
+      </button>
+
+    </article>
+
+  </div>
+</section>
+
+
+<section id="popular" class="section feature-section">
+
+  <div class="feature-grid">
+
+    <div class="feature">
+      <div class="feature-icon">⚡</div>
+      <h3>Fast</h3>
+      <p>
+        Most image tools work directly inside your browser.
+      </p>
+    </div>
+
+    <div class="feature">
+      <div class="feature-icon">🔒</div>
+      <h3>Private</h3>
+      <p>
+        Images are processed locally instead of being uploaded
+        to a FileFox server.
+      </p>
+    </div>
+
+    <div class="feature">
+      <div class="feature-icon">📱</div>
+      <h3>Mobile friendly</h3>
+      <p>
+        Designed to work comfortably on phones and computers.
+      </p>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section id="faq" class="section faq-section">
+
+  <span class="eyebrow">FAQ</span>
+
+  <h2>Frequently asked questions</h2>
+
+  <div class="faq-list">
+
+    <details>
+      <summary>Are the image tools free?</summary>
+      <p>
+        Yes. The tools on this website are designed to be free to use.
+      </p>
+    </details>
+
+    <details>
+      <summary>Are my images uploaded?</summary>
+      <p>
+        The image conversion and compression tools process images
+        locally in your browser.
+      </p>
+    </details>
+
+    <details>
+      <summary>Can I use FileFox on my phone?</summary>
+      <p>
+        Yes. FileFox is designed to work on mobile browsers as well
+        as desktop browsers.
+      </p>
+    </details>
+
+    <details>
+      <summary>Why does QR generation need internet?</summary>
+      <p>
+        The QR generator uses a small external JavaScript library.
+      </p>
+    </details>
+
+  </div>
+
+</section>
+
+</main>
+
+
+<footer class="footer">
+
+  <div class="footer-inner">
+
+    <div>
+      <strong>FileFox</strong>
+      <p>Simple online tools for everyday file tasks.</p>
+    </div>
+
+    <div>
+      <span>© <span id="year"></span> FileFox</span>
+    </div>
+
+  </div>
+
+</footer>
+
+
+<div
+  id="modal"
+  class="modal"
+  aria-hidden="true">
+
+  <div class="modal-box">
+
+    <button
+      class="modal-close"
+      data-close
+      aria-label="Close">
+      ×
+    </button>
+
+    <div id="modalContent"></div>
+
+  </div>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+  </html>
