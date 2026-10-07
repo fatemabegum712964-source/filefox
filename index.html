@@ -1,1122 +1,366 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
+  <meta name="description" content="FileFox - Free online image, PDF, text and developer tools.">
+  <meta name="robots" content="index, follow">
+  <meta name="author" content="FileFox">
+  <meta name="theme-color" content="#16a36a">
 
-  <meta
-    name="description"
-    content="FileFox V2 — fast, private browser tools for images, text and everyday files."
-  >
+  <meta property="og:title" content="FileFox - Free Online Tools">
+  <meta property="og:description" content="Free browser-based tools for images, text, PDF and more.">
+  <meta property="og:type" content="website">
 
-  <meta name="robots" content="index,follow">
-  <meta name="theme-color" content="#07140f">
-
-  <meta
-    property="og:title"
-    content="FileFox V2 — Smart Online Tools"
-  >
-
-  <meta
-    property="og:description"
-    content="Convert, compress, resize, enhance images and work with text directly in your browser."
-  >
-
-  <title>FileFox V2 — Smart Online Tools</title>
-
-  <link
-    rel="preconnect"
-    href="https://cdnjs.cloudflare.com"
-  >
+  <title>FileFox — Free Online Tools</title>
 
   <link rel="stylesheet" href="style.css">
 
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
-    defer
-  ></script>
+  <!-- QR generator only -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 
 <body>
 
-  <div class="ambient ambient-one"></div>
-  <div class="ambient ambient-two"></div>
+<header class="topbar">
+  <div class="nav">
+    <a class="logo" href="#">
+      <span class="logo-mark">F</span>
+      <span>File<span>Fox</span></span>
+    </a>
 
-  <!-- HEADER -->
-  <header class="site-header">
+    <div class="nav-actions">
+      <button id="themeBtn" class="icon-btn" type="button">☾</button>
+    </div>
+  </div>
+</header>
 
-    <div class="nav wrap">
+<main>
 
-      <a
-        class="brand"
-        href="#top"
-        aria-label="FileFox home"
-      >
-        <span class="brand-mark">F</span>
+<section class="hero">
+  <div class="hero-glow"></div>
 
-        <span>
-          File<span>Fox</span>
-          <small>V2</small>
-        </span>
-      </a>
+  <div class="hero-content">
+    <div class="badge">⚡ Fast • Private • Browser-based</div>
 
-      <div class="nav-actions">
+    <h1>Your files.<br><span>Your tools.</span></h1>
 
-        <button
-          class="icon-btn"
-          id="themeToggle"
-          type="button"
-          aria-label="Toggle theme"
-        >
-          ☾
-        </button>
+    <p>
+      Convert, compress, resize, enhance images and work with text
+      directly in your browser.
+    </p>
 
-        <a
-          class="nav-link"
-          href="#tools"
-        >
-          Tools
-        </a>
-
-      </div>
-
+    <div class="search-wrap">
+      <span>⌕</span>
+      <input
+        id="toolSearch"
+        type="search"
+        placeholder="Search a tool..."
+        autocomplete="off">
     </div>
 
-  </header>
-
-
-  <main id="top">
-
-    <!-- HERO -->
-    <section class="hero wrap">
-
-      <div class="hero-copy">
-
-        <div class="eyebrow">
-          <span class="pulse"></span>
-          Fast • private • browser-based
-        </div>
-
-        <h1>
-          Make your files
-          <br>
-          <em>better, faster.</em>
-        </h1>
-
-        <p>
-          Convert, compress, resize, enhance images and transform text
-          without installing complicated software.
-        </p>
-
-        <div class="hero-actions">
-
-          <a
-            class="primary hero-btn"
-            href="#tools"
-          >
-            Explore tools
-            <span>↓</span>
-          </a>
-
-          <div class="privacy-chip">
-            🔒 Processing stays in your browser
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="hero-art" aria-hidden="true">
-
-        <div class="orb"></div>
-
-        <div class="float-card card-a">
-          <b>PNG</b>
-          <span>→ WebP</span>
-          <strong>−42%</strong>
-        </div>
-
-        <div class="float-card card-b">
-          <b>PHOTO</b>
-          <span>Enhanced</span>
-          <strong>✓ Ready</strong>
-        </div>
-
-        <div class="hero-logo">
-          FOX<span>×</span>
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- QUICK STATS -->
-    <section
-      class="quick wrap"
-      aria-label="Highlights"
-    >
-
-      <div>
-        <b>20+</b>
-        <span>Useful tools</span>
-      </div>
-
-      <div>
-        <b>0</b>
-        <span>Uploads required</span>
-      </div>
-
-      <div>
-        <b>1 tap</b>
-        <span>Simple workflow</span>
-      </div>
-
-      <div>
-        <b>Mobile</b>
-        <span>Ready</span>
-      </div>
-
-    </section>
-
-
-    <!-- TOOLS -->
-    <section
-      class="tools-section wrap"
-      id="tools"
-    >
-
-      <div class="section-head">
-
-        <div>
-
-          <span class="section-kicker">
-            TOOLBOX
-          </span>
-
-          <h2>
-            Everything in one place.
-          </h2>
-
-          <p>
-            Pick a tool, add your file or text,
-            and download the result.
-          </p>
-
-        </div>
-
-        <div
-          class="tool-count"
-          id="toolCount"
-        >
-          0 tools
-        </div>
-
-      </div>
-
-
-      <!-- SEARCH -->
-      <div class="search-panel">
-
-        <div class="search-wrap">
-
-          <span>⌕</span>
-
-          <input
-            id="search"
-            type="search"
-            placeholder="Search image, text, PDF, JSON…"
-            autocomplete="off"
-          >
-
-          <button
-            id="clearSearch"
-            type="button"
-          >
-            Clear
-          </button>
-
-        </div>
-
-        <span id="visibleCount">
-          20 shown
-        </span>
-
-      </div>
-
-
-      <!-- IMAGE LAB -->
-      <div class="category-label">
-        IMAGE LAB
-      </div>
-
-      <div
-        class="tool-grid"
-        id="toolGrid"
-      >
-
-        <!-- 01 -->
-        <article
-          class="tool-card featured"
-          data-search="image converter jpg png webp convert"
-        >
-
-          <div class="tool-icon green">
-            ⇄
-          </div>
-
-          <div class="card-top">
-            <span class="tag">POPULAR</span>
-            <span>01</span>
-          </div>
-
-          <h3>Image Converter</h3>
-
-          <p>
-            JPG, PNG and WebP conversion with clean downloads.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="convert"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 02 -->
-        <article
-          class="tool-card"
-          data-search="compress image compressor jpg size"
-        >
-
-          <div class="tool-icon blue">
-            ⌁
-          </div>
-
-          <div class="card-top">
-            <span>SAVE SPACE</span>
-            <span>02</span>
-          </div>
-
-          <h3>Image Compressor</h3>
-
-          <p>
-            Reduce image size with an adjustable quality level.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="compress"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 03 -->
-        <article
-          class="tool-card"
-          data-search="resize image dimensions scale"
-        >
-
-          <div class="tool-icon purple">
-            ↗
-          </div>
-
-          <div class="card-top">
-            <span>03</span>
-          </div>
-
-          <h3>Image Resizer</h3>
-
-          <p>
-            Set exact dimensions and optionally lock the ratio.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="resize"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 04 -->
-        <article
-          class="tool-card"
-          data-search="crop image cut"
-        >
-
-          <div class="tool-icon orange">
-            ◰
-          </div>
-
-          <div class="card-top">
-            <span>04</span>
-          </div>
-
-          <h3>Image Cropper</h3>
-
-          <p>
-            Crop with precise X, Y, width and height controls.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="crop"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 05 -->
-        <article
-          class="tool-card"
-          data-search="rotate flip mirror image"
-        >
-
-          <div class="tool-icon pink">
-            ↻
-          </div>
-
-          <div class="card-top">
-            <span>05</span>
-          </div>
-
-          <h3>Rotate & Flip</h3>
-
-          <p>
-            Rotate or mirror your image and download a new copy.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="rotate"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 06 -->
-        <article
-          class="tool-card featured"
-          data-search="dslr photo enhancer camera sharpness vivid natural"
-        >
-
-          <div class="tool-icon gold">
-            ✦
-          </div>
-
-          <div class="card-top">
-            <span class="tag">NEW</span>
-            <span>06</span>
-          </div>
-
-          <h3>Photo Enhancer</h3>
-
-          <p>
-            Natural, vivid and cinematic adjustments for a cleaner look.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="enhance"
-            type="button"
-          >
-            Enhance photo
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 07 -->
-        <article
-          class="tool-card"
-          data-search="background remover transparent png remove"
-        >
-
-          <div class="tool-icon cyan">
-            ◇
-          </div>
-
-          <div class="card-top">
-            <span class="tag">LOCAL</span>
-            <span>07</span>
-          </div>
-
-          <h3>Background Cleaner</h3>
-
-          <p>
-            Remove similar plain backgrounds and export transparent PNG.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="background"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 08 -->
-        <article
-          class="tool-card"
-          data-search="image pdf photo pdf print save"
-        >
-
-          <div class="tool-icon red">
-            ▣
-          </div>
-
-          <div class="card-top">
-            <span>08</span>
-          </div>
-
-          <h3>Image to PDF</h3>
-
-          <p>
-            Open a print-ready image page and save it as PDF in Chrome.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="pdf"
-            type="button"
-          >
-            Create PDF
-            <span>→</span>
-          </button>
-
-        </article>
-
-      </div>
-
-
-      <!-- TEXT & WEB -->
-      <div class="category-label">
-        TEXT & WEB
-      </div>
-
-      <div class="tool-grid">
-
-
-        <!-- 09 -->
-        <article
-          class="tool-card"
-          data-search="qr code generator link text"
-        >
-
-          <div class="tool-icon violet">
-            ▦
-          </div>
-
-          <div class="card-top">
-            <span>09</span>
-          </div>
-
-          <h3>QR Generator</h3>
-
-          <p>
-            Turn text or a link into a downloadable QR code.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="qr"
-            type="button"
-          >
-            Create QR
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 10 -->
-        <article
-          class="tool-card"
-          data-search="text word counter case cleaner"
-        >
-
-          <div class="tool-icon blue">
-            Aa
-          </div>
-
-          <div class="card-top">
-            <span>10</span>
-          </div>
-
-          <h3>Text Toolkit</h3>
-
-          <p>
-            Count words, change case and clean messy spacing.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="text"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 11 -->
-        <article
-          class="tool-card"
-          data-search="password generator random security"
-        >
-
-          <div class="tool-icon green">
-            •••
-          </div>
-
-          <div class="card-top">
-            <span>11</span>
-          </div>
-
-          <h3>Password Generator</h3>
-
-          <p>
-            Create random passwords locally with your chosen length.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="password"
-            type="button"
-          >
-            Generate
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 12 -->
-        <article
-          class="tool-card"
-          data-search="calculator math calculate"
-        >
-
-          <div class="tool-icon orange">
-            ＋
-          </div>
-
-          <div class="card-top">
-            <span>12</span>
-          </div>
-
-          <h3>Quick Calculator</h3>
-
-          <p>
-            Handle everyday arithmetic without leaving FileFox.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="calculator"
-            type="button"
-          >
-            Calculate
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 13 -->
-        <article
-          class="tool-card"
-          data-search="json formatter validator developer"
-        >
-
-          <div class="tool-icon yellow">
-            { }
-          </div>
-
-          <div class="card-top">
-            <span>13</span>
-          </div>
-
-          <h3>JSON Formatter</h3>
-
-          <p>
-            Format and validate JSON instantly in your browser.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="json"
-            type="button"
-          >
-            Format JSON
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 14 -->
-        <article
-          class="tool-card"
-          data-search="url encoder decoder web developer"
-        >
-
-          <div class="tool-icon cyan">
-            ↗
-          </div>
-
-          <div class="card-top">
-            <span>14</span>
-          </div>
-
-          <h3>URL Encoder</h3>
-
-          <p>
-            Encode or decode URL text safely and quickly.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="url"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 15 -->
-        <article
-          class="tool-card"
-          data-search="html entity encoder decoder web"
-        >
-
-          <div class="tool-icon pink">
-            &lt;/&gt;
-          </div>
-
-          <div class="card-top">
-            <span>15</span>
-          </div>
-
-          <h3>HTML Entity Tool</h3>
-
-          <p>
-            Encode special characters or decode HTML entities.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="html"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 16 -->
-        <article
-          class="tool-card"
-          data-search="slug url title seo"
-        >
-
-          <div class="tool-icon purple">
-            #
-          </div>
-
-          <div class="card-top">
-            <span>16</span>
-          </div>
-
-          <h3>Text to Slug</h3>
-
-          <p>
-            Turn titles into clean, readable URL slugs.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="slug"
-            type="button"
-          >
-            Create slug
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 17 -->
-        <article
-          class="tool-card"
-          data-search="duplicate lines remove text"
-        >
-
-          <div class="tool-icon green">
-            ≠
-          </div>
-
-          <div class="card-top">
-            <span>17</span>
-          </div>
-
-          <h3>Remove Duplicates</h3>
-
-          <p>
-            Remove repeated lines while keeping the original order.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="duplicate"
-            type="button"
-          >
-            Clean lines
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 18 -->
-        <article
-          class="tool-card"
-          data-search="reverse text lines"
-        >
-
-          <div class="tool-icon blue">
-            ⇆
-          </div>
-
-          <div class="card-top">
-            <span>18</span>
-          </div>
-
-          <h3>Text Reverser</h3>
-
-          <p>
-            Reverse characters or quickly reverse line order.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="reverse"
-            type="button"
-          >
-            Reverse
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 19 -->
-        <article
-          class="tool-card"
-          data-search="line counter characters words"
-        >
-
-          <div class="tool-icon orange">
-            ≡
-          </div>
-
-          <div class="card-top">
-            <span>19</span>
-          </div>
-
-          <h3>Line Counter</h3>
-
-          <p>
-            Count lines, non-empty lines, words and characters.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="lines"
-            type="button"
-          >
-            Count
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 20 -->
-        <article
-          class="tool-card"
-          data-search="base64 encoder decoder developer"
-        >
-
-          <div class="tool-icon violet">
-            64
-          </div>
-
-          <div class="card-top">
-            <span>20</span>
-          </div>
-
-          <h3>Base64 Tool</h3>
-
-          <p>
-            Encode and decode UTF-8 text using Base64.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="base64"
-            type="button"
-          >
-            Open tool
-            <span>→</span>
-          </button>
-
-        </article>
-
-
-        <!-- 21 -->
-        <article
-          class="tool-card"
-          data-search="uuid generator developer id"
-        >
-
-          <div class="tool-icon red">
-            ID
-          </div>
-
-          <div class="card-top">
-            <span>21</span>
-          </div>
-
-          <h3>UUID Generator</h3>
-
-          <p>
-            Generate random UUID identifiers locally.
-          </p>
-
-          <button
-            class="tool-btn"
-            data-action="uuid"
-            type="button"
-          >
-            Generate UUID
-            <span>→</span>
-          </button>
-
-        </article>
-
-      </div>
-
-    </section>
-
-
-    <!-- WHY -->
-    <section class="why wrap">
-
-      <div>
-
-        <span class="section-kicker">
-          WHY FILEFOX
-        </span>
-
-        <h2>
-          Built for real everyday work.
-        </h2>
-
-      </div>
-
-
-      <div class="why-grid">
-
-        <div>
-          <b>01</b>
-          <h3>Private by default</h3>
-          <p>
-            Image operations happen in the browser, so there is no
-            FileFox upload server for these tools.
-          </p>
-        </div>
-
-        <div>
-          <b>02</b>
-          <h3>Made for phones</h3>
-          <p>
-            Large touch targets, responsive layouts and lightweight
-            processing make it comfortable on mobile Chrome.
-          </p>
-        </div>
-
-        <div>
-          <b>03</b>
-          <h3>One clean system</h3>
-          <p>
-            Every tool uses the same modal, file picker, error handling
-            and download workflow.
-          </p>
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- CTA -->
-    <section class="cta wrap">
-
-      <div>
-
-        <span class="section-kicker">
-          FILEFOX V2
-        </span>
-
-        <h2>
-          Small tools. Big time savings.
-        </h2>
-
-        <p>
-          Keep FileFox bookmarked for the little file jobs
-          that normally slow you down.
-        </p>
-
-      </div>
-
-      <a
-        class="primary"
-        href="#tools"
-      >
-        Browse all tools →
-      </a>
-
-    </section>
-
-  </main>
-
-
-  <!-- FOOTER -->
-  <footer class="footer">
-
-    <div class="wrap footer-inner">
-
-      <div class="brand footer-brand">
-
-        <span class="brand-mark">
-          F
-        </span>
-
-        <span>
-          File<span>Fox</span>
-          <small>V2</small>
-        </span>
-
-      </div>
-
-      <p>
-        Useful browser tools, designed for simple everyday work.
-      </p>
-
-      <span>
-        © <span id="year"></span> FileFox
-      </span>
-
+    <div class="tool-count" id="toolCount">Loading tools...</div>
+  </div>
+</section>
+
+
+<section class="tools-section">
+  <div class="section-head">
+    <div>
+      <span class="eyebrow">TOOLBOX</span>
+      <h2>Everything you need</h2>
+      <p>Simple tools with no complicated setup.</p>
     </div>
+  </div>
 
-  </footer>
+  <div class="tools-grid" id="toolsGrid">
+
+    <!-- IMAGE CONVERSION -->
+
+    <article class="tool-card" data-search="jpg jpeg png convert image">
+      <div class="tool-icon">🖼️</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>JPG → PNG</h3>
+      <p>Convert JPG images into PNG files.</p>
+      <button class="tool-btn" data-action="image" data-type="jpg-png">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="png jpg jpeg convert image">
+      <div class="tool-icon">🔄</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>PNG → JPG</h3>
+      <p>Convert transparent PNG images into JPG.</p>
+      <button class="tool-btn" data-action="image" data-type="png-jpg">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="jpg webp convert image">
+      <div class="tool-icon">⚡</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>JPG → WebP</h3>
+      <p>Create smaller modern WebP images.</p>
+      <button class="tool-btn" data-action="image" data-type="jpg-webp">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="png webp convert image">
+      <div class="tool-icon">✨</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>PNG → WebP</h3>
+      <p>Convert PNG images into WebP.</p>
+      <button class="tool-btn" data-action="image" data-type="png-webp">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="webp jpg jpeg convert">
+      <div class="tool-icon">📷</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>WebP → JPG</h3>
+      <p>Convert WebP images into JPG.</p>
+      <button class="tool-btn" data-action="image" data-type="webp-jpg">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="webp png convert">
+      <div class="tool-icon">🧩</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>WebP → PNG</h3>
+      <p>Convert WebP images into PNG.</p>
+      <button class="tool-btn" data-action="image" data-type="webp-png">
+        Use tool →
+      </button>
+    </article>
 
 
-  <!-- TOOL DIALOG -->
-  <dialog
-    id="toolDialog"
-    aria-labelledby="dialogTitle"
-  >
+    <!-- IMAGE TOOLS -->
 
-    <div class="dialog-shell">
+    <article class="tool-card" data-search="compress image reduce size">
+      <div class="tool-icon">🗜️</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>Image Compressor</h3>
+      <p>Reduce image file size while keeping good quality.</p>
+      <button class="tool-btn" data-action="compress">
+        Use tool →
+      </button>
+    </article>
 
-      <div class="dialog-head">
+    <article class="tool-card" data-search="resize image dimensions">
+      <div class="tool-icon">↔️</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>Image Resizer</h3>
+      <p>Change image width and height easily.</p>
+      <button class="tool-btn" data-action="resize">
+        Use tool →
+      </button>
+    </article>
 
-        <div>
+    <article class="tool-card" data-search="crop image cut">
+      <div class="tool-icon">✂️</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>Image Cropper</h3>
+      <p>Crop an image using precise coordinates.</p>
+      <button class="tool-btn" data-action="crop">
+        Use tool →
+      </button>
+    </article>
 
-          <span class="section-kicker">
-            FILEFOX TOOL
-          </span>
+    <article class="tool-card" data-search="rotate image turn">
+      <div class="tool-icon">🔃</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>Image Rotator</h3>
+      <p>Rotate images by 90, 180 or 270 degrees.</p>
+      <button class="tool-btn" data-action="rotate">
+        Use tool →
+      </button>
+    </article>
 
-          <h2 id="dialogTitle">
-            Tool
-          </h2>
+    <article class="tool-card" data-search="flip mirror image">
+      <div class="tool-icon">↔️</div>
+      <div class="tool-tag">IMAGE</div>
+      <h3>Image Flipper</h3>
+      <p>Flip images horizontally or vertically.</p>
+      <button class="tool-btn" data-action="flip">
+        Use tool →
+      </button>
+    </article>
 
-          <p id="dialogSubtitle"></p>
+    <article class="tool-card" data-search="dslr photo enhancer improve image">
+      <div class="tool-icon">📸</div>
+      <div class="tool-tag">PHOTO</div>
+      <h3>DSLR Look</h3>
+      <p>Give ordinary photos a sharper, richer camera-style look.</p>
+      <button class="tool-btn" data-action="enhance">
+        Use tool →
+      </button>
+    </article>
 
-        </div>
-
-        <button
-          id="closeDialog"
-          class="close-btn"
-          type="button"
-          aria-label="Close"
-        >
-          ×
-        </button>
-
-      </div>
-
-      <div
-        id="dialogBody"
-        class="dialog-body"
-      ></div>
-
-    </div>
-
-  </dialog>
-
-
-  <div
-    id="toast"
-    class="toast"
-    role="status"
-    aria-live="polite"
-  ></div>
+    <article class="tool-card" data-search="background remover transparent image">
+      <div class="tool-icon">🪄</div>
+      <div class="tool-tag">PHOTO</div>
+      <h3>Background Cleaner</h3>
+      <p>Remove simple solid-color backgrounds.</p>
+      <button class="tool-btn" data-action="background">
+        Use tool →
+      </button>
+    </article>
 
 
-  <script src="script.js"></script>
+    <!-- PDF -->
+
+    <article class="tool-card" data-search="image pdf jpg png pdf">
+      <div class="tool-icon">📄</div>
+      <div class="tool-tag">PDF</div>
+      <h3>Image → PDF</h3>
+      <p>Turn an image into a printable PDF.</p>
+      <button class="tool-btn" data-action="pdf">
+        Use tool →
+      </button>
+    </article>
+
+
+    <!-- QR -->
+
+    <article class="tool-card" data-search="qr code generator">
+      <div class="tool-icon">▦</div>
+      <div class="tool-tag">UTILITY</div>
+      <h3>QR Generator</h3>
+      <p>Create a QR code from text or a link.</p>
+      <button class="tool-btn" data-action="qr">
+        Use tool →
+      </button>
+    </article>
+
+
+    <!-- TEXT -->
+
+    <article class="tool-card" data-search="word counter text words">
+      <div class="tool-icon">🔢</div>
+      <div class="tool-tag">TEXT</div>
+      <h3>Word Counter</h3>
+      <p>Count words, characters and lines.</p>
+      <button class="tool-btn" data-action="text" data-text-tool="counter">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="uppercase lowercase case converter">
+      <div class="tool-icon">Aa</div>
+      <div class="tool-tag">TEXT</div>
+      <h3>Case Converter</h3>
+      <p>Convert text to upper, lower or title case.</p>
+      <button class="tool-btn" data-action="text" data-text-tool="case">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="clean text spaces">
+      <div class="tool-icon">🧹</div>
+      <div class="tool-tag">TEXT</div>
+      <h3>Text Cleaner</h3>
+      <p>Remove extra spaces and empty lines.</p>
+      <button class="tool-btn" data-action="text" data-text-tool="clean">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="duplicate lines remove text">
+      <div class="tool-icon">🧾</div>
+      <div class="tool-tag">TEXT</div>
+      <h3>Duplicate Remover</h3>
+      <p>Remove repeated lines from text.</p>
+      <button class="tool-btn" data-action="text" data-text-tool="duplicate">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="slug url text">
+      <div class="tool-icon">🔗</div>
+      <div class="tool-tag">TEXT</div>
+      <h3>Text → Slug</h3>
+      <p>Turn text into a clean URL slug.</p>
+      <button class="tool-btn" data-action="text" data-text-tool="slug">
+        Use tool →
+      </button>
+    </article>
+
+
+    <!-- UTILITY -->
+
+    <article class="tool-card" data-search="password generator secure">
+      <div class="tool-icon">🔐</div>
+      <div class="tool-tag">UTILITY</div>
+      <h3>Password Generator</h3>
+      <p>Generate random passwords in your browser.</p>
+      <button class="tool-btn" data-action="password">
+        Use tool →
+      </button>
+    </article>
+
+    <article class="tool-card" data-search="calculator math">
+      <div class="tool-icon">🧮</div>
+      <div class="tool-tag">UTILITY</div>
+      <h3>Quick Calculator</h3>
+      <p>Perform simple calculations instantly.</p>
+      <button class="tool-btn" data-action="calculator">
+        Use tool →
+      </button>
+    </article>
+
+  </div>
+</section>
+
+
+<section class="features">
+  <div class="feature">
+    <span>🔒</span>
+    <h3>Private</h3>
+    <p>Your selected files are processed in your browser.</p>
+  </div>
+
+  <div class="feature">
+    <span>⚡</span>
+    <h3>Fast</h3>
+    <p>No account or complicated setup required.</p>
+  </div>
+
+  <div class="feature">
+    <span>📱</span>
+    <h3>Mobile Ready</h3>
+    <p>Designed to work comfortably on phones.</p>
+  </div>
+</section>
+
+</main>
+
+
+<footer>
+  <div class="footer-logo">FileFox</div>
+  <p>Simple tools for everyday files.</p>
+  <small>© <span id="year"></span> FileFox</small>
+</footer>
+
+
+<!-- MODAL -->
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose" type="button">×</button>
+
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+
+<script src="script.js"></script>
 
 </body>
-  </html>
+</html>
