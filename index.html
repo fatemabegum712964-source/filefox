@@ -2,530 +2,1148 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="FileFox - free online image and text tools.">
-  <meta name="robots" content="index, follow">
-  <meta name="author" content="FileFox">
-  <meta name="theme-color" content="#20a464">
-  <meta property="og:title" content="FileFox - Free Online Tools">
-  <meta property="og:description" content="Free online tools for converting, compressing and resizing images, plus useful text tools.">
-  <meta property="og:type" content="website">
-  <title>FileFox — Free Online Tools</title>
 
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-segmentation"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation"></script>
+  <meta name="description"
+        content="FileFox is a modern free online toolkit for image conversion, compression, resizing, photo enhancement, QR codes, text tools and more.">
+
+  <meta name="robots"
+        content="index, follow">
+
+  <meta name="author"
+        content="FileFox">
+
+  <meta name="theme-color"
+        content="#12a56f">
+
+  <meta property="og:title"
+        content="FileFox — Simple Tools for Everyday Files">
+
+  <meta property="og:description"
+        content="Convert, compress, resize and enhance images with useful browser-based tools.">
+
+  <meta property="og:type"
+        content="website">
+
+  <title>FileFox — Simple Tools for Everyday Files</title>
+
+  <link rel="stylesheet"
+        href="style.css">
+
+  <!-- QR generator -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js">
+  </script>
 </head>
+
 
 <body>
 
-<header class="topbar">
-  <div class="nav">
-    <a class="brand" href="#">
-      <span class="brand-icon">F</span>
-      FileFox
-    </a>
+  <!-- =====================================================
+       NAVBAR
+       ===================================================== -->
 
-    <nav>
-      <a href="#tools">Tools</a>
-      <a href="#popular">Popular</a>
-      <a href="#faq">FAQ</a>
-    </nav>
+  <header class="navbar">
 
-    <button id="themeBtn" class="icon-btn" aria-label="Change theme">
-      ◐
-    </button>
+    <div class="nav-wrap">
+
+      <a href="#top"
+         class="brand">
+
+        <span class="brand-icon">
+          F
+        </span>
+
+        <span class="brand-name">
+          FileFox
+        </span>
+
+      </a>
+
+
+      <nav class="desktop-nav">
+
+        <a href="#tools">
+          Tools
+        </a>
+
+        <a href="#features">
+          Features
+        </a>
+
+        <a href="#faq">
+          FAQ
+        </a>
+
+      </nav>
+
+
+      <button
+        id="themeBtn"
+        class="theme-btn"
+        type="button"
+        aria-label="Toggle dark mode">
+
+        ◐
+
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- =====================================================
+       HERO
+       ===================================================== -->
+
+  <main id="top">
+
+    <section class="hero">
+
+      <div class="hero-orb orb-a"></div>
+      <div class="hero-orb orb-b"></div>
+      <div class="hero-orb orb-c"></div>
+
+
+      <div class="hero-inner">
+
+        <div class="hero-badge">
+
+          <span class="status-dot"></span>
+
+          Free browser tools
+
+        </div>
+
+
+        <h1>
+
+          Your files,
+
+          <span>
+            simplified.
+          </span>
+
+        </h1>
+
+
+        <p class="hero-text">
+
+          Convert, compress, resize, enhance and organize
+          your everyday files with a clean collection of
+          fast browser-based tools.
+
+        </p>
+
+
+        <div class="hero-buttons">
+
+          <a
+            href="#tools"
+            class="btn btn-primary">
+
+            Explore tools
+
+            <span>
+              →
+            </span>
+
+          </a>
+
+
+          <button
+            id="heroEnhanceBtn"
+            class="btn btn-secondary"
+            type="button">
+
+            Try Photo Lab
+
+          </button>
+
+        </div>
+
+
+        <div class="hero-points">
+
+          <span>
+            ⚡ Fast
+          </span>
+
+          <span>
+            🔒 Browser-first
+          </span>
+
+          <span>
+            📱 Mobile-ready
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         SEARCH
+         =================================================== -->
+
+    <section class="search-area">
+
+      <div class="search-box">
+
+        <span class="search-symbol">
+          ⌕
+        </span>
+
+
+        <input
+          id="toolSearch"
+          type="search"
+          placeholder="Search tools..."
+          autocomplete="off">
+
+
+        <kbd>
+          Ctrl K
+        </kbd>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         TOOLS
+         =================================================== -->
+
+    <section
+      id="tools"
+      class="section tools-section">
+
+
+      <div class="section-head">
+
+        <div>
+
+          <span class="eyebrow">
+            TOOLBOX
+          </span>
+
+          <h2>
+            Useful tools,
+            without the clutter.
+          </h2>
+
+          <p>
+            Pick a tool and get the job done.
+          </p>
+
+        </div>
+
+
+        <div
+          id="toolCount"
+          class="tool-count">
+
+          Loading...
+
+        </div>
+
+      </div>
+
+
+      <!-- CATEGORY -->
+
+      <div class="category-row">
+
+        <button
+          class="category active"
+          data-category="all"
+          type="button">
+
+          All
+
+        </button>
+
+
+        <button
+          class="category"
+          data-category="image"
+          type="button">
+
+          Image
+
+        </button>
+
+
+        <button
+          class="category"
+          data-category="document"
+          type="button">
+
+          PDF
+
+        </button>
+
+
+        <button
+          class="category"
+          data-category="text"
+          type="button">
+
+          Text
+
+        </button>
+
+
+        <button
+          class="category"
+          data-category="utility"
+          type="button">
+
+          Utility
+
+        </button>
+
+      </div>
+
+
+      <!-- TOOL GRID -->
+
+      <div
+        id="toolGrid"
+        class="tool-grid">
+
+
+        <!-- IMAGE CONVERTER -->
+
+        <article
+          class="tool-card featured-card"
+          data-category="image"
+          data-search="image converter jpg png webp jpeg convert format">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-green">
+              ↔
+            </div>
+
+            <span class="card-tag">
+              POPULAR
+            </span>
+
+          </div>
+
+
+          <h3>
+            Image Converter
+          </h3>
+
+
+          <p>
+            Convert JPG, PNG and WebP images into another format.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="converter"
+            type="button">
+
+            Open converter
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- COMPRESS -->
+
+        <article
+          class="tool-card"
+          data-category="image"
+          data-search="image compressor compress jpg png reduce size">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-orange">
+              ▱
+            </div>
+
+          </div>
+
+
+          <h3>
+            Image Compressor
+          </h3>
+
+
+          <p>
+            Reduce image file size while keeping useful quality.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="compress"
+            type="button">
+
+            Compress image
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- RESIZE -->
+
+        <article
+          class="tool-card"
+          data-category="image"
+          data-search="image resize width height dimensions">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-blue">
+              ↗
+            </div>
+
+          </div>
+
+
+          <h3>
+            Image Resizer
+          </h3>
+
+
+          <p>
+            Change image dimensions with optional aspect-ratio lock.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="resize"
+            type="button">
+
+            Resize image
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- DSLR -->
+
+        <article
+          class="tool-card photo-card"
+          data-category="image"
+          data-search="dslr photo enhancer camera professional sharp color vivid cinematic">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-purple">
+              ✦
+            </div>
+
+            <span class="card-tag purple-tag">
+              PHOTO LAB
+            </span>
+
+          </div>
+
+
+          <h3>
+            DSLR Look
+          </h3>
+
+
+          <p>
+            Enhance color, contrast, brightness and clarity for a polished photo.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="enhance"
+            type="button">
+
+            Open Photo Lab
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- BACKGROUND -->
+
+        <article
+          class="tool-card"
+          data-category="image"
+          data-search="background remover remove background transparent png">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-teal">
+              ✂
+            </div>
+
+          </div>
+
+
+          <h3>
+            Background Remover
+          </h3>
+
+
+          <p>
+            Remove a simple, fairly uniform background and export PNG.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="background"
+            type="button">
+
+            Remove background
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- PDF -->
+
+        <article
+          class="tool-card"
+          data-category="document"
+          data-search="image pdf jpg pdf png pdf create printable">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-red">
+              ▣
+            </div>
+
+          </div>
+
+
+          <h3>
+            Image → PDF
+          </h3>
+
+
+          <p>
+            Turn an image into a printable PDF using Chrome's print system.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="pdf"
+            type="button">
+
+            Create PDF
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- QR -->
+
+        <article
+          class="tool-card"
+          data-category="utility"
+          data-search="qr generator qr code link url text">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-dark">
+              ▦
+            </div>
+
+          </div>
+
+
+          <h3>
+            QR Generator
+          </h3>
+
+
+          <p>
+            Generate QR codes from links, text and short messages.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="qr"
+            type="button">
+
+            Generate QR
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- WORD COUNTER -->
+
+        <article
+          class="tool-card"
+          data-category="text"
+          data-search="word counter character count sentence line counter">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-cyan">
+              Aa
+            </div>
+
+          </div>
+
+
+          <h3>
+            Word Counter
+          </h3>
+
+
+          <p>
+            Count words, characters, sentences and lines.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="counter"
+            type="button">
+
+            Count text
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- CASE -->
+
+        <article
+          class="tool-card"
+          data-category="text"
+          data-search="case converter uppercase lowercase title text">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-violet">
+              Aa
+            </div>
+
+          </div>
+
+
+          <h3>
+            Case Converter
+          </h3>
+
+
+          <p>
+            Convert text to uppercase, lowercase or title case.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="case"
+            type="button">
+
+            Convert text
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- CLEANER -->
+
+        <article
+          class="tool-card"
+          data-category="text"
+          data-search="text cleaner clean spaces blank lines whitespace">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-lime">
+              ≡
+            </div>
+
+          </div>
+
+
+          <h3>
+            Text Cleaner
+          </h3>
+
+
+          <p>
+            Remove unnecessary spaces and empty lines.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="clean"
+            type="button">
+
+            Clean text
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- PASSWORD -->
+
+        <article
+          class="tool-card"
+          data-category="utility"
+          data-search="password generator random secure password">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-gold">
+              🔐
+            </div>
+
+          </div>
+
+
+          <h3>
+            Password Generator
+          </h3>
+
+
+          <p>
+            Generate random passwords with adjustable length.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="password"
+            type="button">
+
+            Generate
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+        <!-- CALCULATOR -->
+
+        <article
+          class="tool-card"
+          data-category="utility"
+          data-search="calculator math calculate numbers">
+
+          <div class="card-top">
+
+            <div class="tool-icon icon-slate">
+              ＋
+            </div>
+
+          </div>
+
+
+          <h3>
+            Quick Calculator
+          </h3>
+
+
+          <p>
+            Calculate simple mathematical expressions quickly.
+          </p>
+
+
+          <button
+            class="tool-btn"
+            data-action="calculator"
+            type="button">
+
+            Calculate
+            <span>→</span>
+
+          </button>
+
+        </article>
+
+
+      </div>
+
+
+      <div
+        id="noResults"
+        class="no-results hidden">
+
+        <div class="empty-icon">
+          ⌕
+        </div>
+
+        <h3>
+          Nothing found
+        </h3>
+
+        <p>
+          Try a different search term.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         FEATURES
+         =================================================== -->
+
+    <section
+      id="features"
+      class="section">
+
+
+      <div class="section-head center-head">
+
+        <div>
+
+          <span class="eyebrow">
+            WHY FILEFOX
+          </span>
+
+          <h2>
+            Small tools.
+            Big convenience.
+          </h2>
+
+          <p>
+            Designed around simple everyday tasks.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <div class="feature-grid">
+
+
+        <div class="feature-card">
+
+          <div class="feature-number">
+            01
+          </div>
+
+          <div class="feature-icon">
+            ⚡
+          </div>
+
+          <h3>
+            Fast
+          </h3>
+
+          <p>
+            Lightweight interfaces that get out of your way.
+          </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+          <div class="feature-number">
+            02
+          </div>
+
+          <div class="feature-icon">
+            🔒
+          </div>
+
+          <h3>
+            Browser-first
+          </h3>
+
+          <p>
+            Core image processing happens directly in your browser.
+          </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+          <div class="feature-number">
+            03
+          </div>
+
+          <div class="feature-icon">
+            📱
+          </div>
+
+          <h3>
+            Mobile-ready
+          </h3>
+
+          <p>
+            Built to remain comfortable on phone screens.
+          </p>
+
+        </div>
+
+
+        <div class="feature-card">
+
+          <div class="feature-number">
+            04
+          </div>
+
+          <div class="feature-icon">
+            ✨
+          </div>
+
+          <h3>
+            Growing
+          </h3>
+
+          <p>
+            More useful tools can be added as FileFox evolves.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ===================================================
+         FAQ
+         =================================================== -->
+
+    <section
+      id="faq"
+      class="section faq-section">
+
+
+      <div class="section-head center-head">
+
+        <div>
+
+          <span class="eyebrow">
+            FAQ
+          </span>
+
+          <h2>
+            Questions?
+          </h2>
+
+        </div>
+
+      </div>
+
+
+      <div class="faq-list">
+
+
+        <details>
+
+          <summary>
+            Is FileFox free?
+            <span>+</span>
+          </summary>
+
+          <p>
+            The tools in this version are designed to be free to use.
+          </p>
+
+        </details>
+
+
+        <details>
+
+          <summary>
+            Do I need to install an app?
+            <span>+</span>
+          </summary>
+
+          <p>
+            No. FileFox is designed to work from a modern web browser.
+          </p>
+
+        </details>
+
+
+        <details>
+
+          <summary>
+            Does DSLR Look really turn a photo into a DSLR photo?
+            <span>+</span>
+          </summary>
+
+          <p>
+            No camera can be recreated by simple browser filters.
+            DSLR Look is a photo-enhancement tool that adjusts
+            color, contrast, brightness and local clarity.
+          </p>
+
+        </details>
+
+
+        <details>
+
+          <summary>
+            Does Background Remover work on every image?
+            <span>+</span>
+          </summary>
+
+          <p>
+            This lightweight version works best with simple,
+            relatively uniform backgrounds. Complex hair,
+            transparent objects and busy backgrounds need a
+            dedicated segmentation model.
+          </p>
+
+        </details>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       MODAL
+       ===================================================== -->
+
+  <div
+    id="modal"
+    class="modal hidden"
+    aria-hidden="true">
+
+
+    <div
+      id="modalBackdrop"
+      class="modal-backdrop">
+    </div>
+
+
+    <div
+      class="modal-panel"
+      role="dialog"
+      aria-modal="true">
+
+
+      <button
+        id="modalClose"
+        class="modal-close"
+        type="button"
+        aria-label="Close">
+
+        ×
+
+      </button>
+
+
+      <div id="modalContent"></div>
+
+    </div>
+
   </div>
-</header>
 
 
-<main>
+  <!-- =====================================================
+       FOOTER
+       ===================================================== -->
 
-<section class="hero">
-  <div class="hero-inner">
+  <footer>
 
-    <div class="badge">
-      Free • Fast • Private
+    <div class="footer-main">
+
+      <div>
+
+        <a
+          href="#top"
+          class="brand">
+
+          <span class="brand-icon">
+            F
+          </span>
+
+          <span class="brand-name">
+            FileFox
+          </span>
+
+        </a>
+
+
+        <p class="footer-text">
+          Simple tools for everyday files.
+        </p>
+
+      </div>
+
+
+      <div class="footer-links">
+
+        <a href="#tools">
+          Tools
+        </a>
+
+        <a href="#features">
+          Features
+        </a>
+
+        <a href="#faq">
+          FAQ
+        </a>
+
+      </div>
+
     </div>
 
-    <h1>
-      Powerful file tools.<br>
-      <span>Right in your browser.</span>
-    </h1>
 
-    <p>
-      Convert, compress, resize images and work with text
-      without installing complicated software.
-    </p>
+    <div class="footer-bottom">
 
-    <div class="search-box">
-      <span>⌕</span>
-      <input
-        id="toolSearch"
-        type="search"
-        placeholder="Search a tool..."
-        autocomplete="off"
-      >
+      <span>
+        © <span id="year"></span> FileFox
+      </span>
+
+      <span>
+        Made for the web.
+      </span>
+
     </div>
 
-    <div class="tool-count" id="toolCount">
-      Loading tools...
-    </div>
+  </footer>
 
-  </div>
-</section>
 
-
-<section id="tools" class="section">
-  <div class="section-head">
-    <div>
-      <span class="eyebrow">ALL TOOLS</span>
-      <h2>Everything you need</h2>
-    </div>
-  </div>
-
-
-  <div class="tool-grid">
-
-
-    <article class="tool-card"
-      data-search="jpg jpeg png image convert photo">
-
-      <div class="tool-icon">🖼️</div>
-
-      <h3>JPG to PNG</h3>
-
-      <p>Convert JPG images into PNG files.</p>
-
-      <button
-        class="tool-btn"
-        data-action="image"
-        data-type="jpg-png">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="png jpg image convert photo">
-
-      <div class="tool-icon">🌄</div>
-
-      <h3>PNG to JPG</h3>
-
-      <p>Convert PNG images into JPG files.</p>
-
-      <button
-        class="tool-btn"
-        data-action="image"
-        data-type="png-jpg">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="jpg webp image convert">
-
-      <div class="tool-icon">⚡</div>
-
-      <h3>JPG to WebP</h3>
-
-      <p>Create smaller modern WebP images.</p>
-
-      <button
-        class="tool-btn"
-        data-action="image"
-        data-type="jpg-webp">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="png webp image convert">
-
-      <div class="tool-icon">✨</div>
-
-      <h3>PNG to WebP</h3>
-
-      <p>Convert PNG images to WebP.</p>
-
-      <button
-        class="tool-btn"
-        data-action="image"
-        data-type="png-webp">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="webp jpg image convert">
-
-      <div class="tool-icon">🔄</div>
-
-      <h3>WebP to JPG</h3>
-
-      <p>Convert WebP images to JPG.</p>
-
-      <button
-        class="tool-btn"
-        data-action="image"
-        data-type="webp-jpg">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="webp png image convert">
-
-      <div class="tool-icon">🔁</div>
-
-      <h3>WebP to PNG</h3>
-
-      <p>Convert WebP images to PNG.</p>
-
-      <button
-        class="tool-btn"
-        data-action="image"
-        data-type="webp-png">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="compress image reduce size photo">
-
-      <div class="tool-icon">📦</div>
-
-      <h3>Image Compressor</h3>
-
-      <p>Reduce image size while keeping good quality.</p>
-
-      <button
-        class="tool-btn"
-        data-action="compress">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="resize image photo width height">
-
-      <div class="tool-icon">↔️</div>
-
-      <h3>Image Resizer</h3>
-
-      <p>Resize images to your preferred width.</p>
-
-      <button
-        class="tool-btn"
-        data-action="resize">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="image pdf convert">
-
-      <div class="tool-icon">📄</div>
-
-      <h3>Image to PDF</h3>
-
-      <p>Turn an image into a printable PDF.</p>
-
-      <button
-        class="tool-btn"
-        data-action="pdf">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="qr qr code generator">
-
-      <div class="tool-icon">▦</div>
-
-      <h3>QR Code Generator</h3>
-
-      <p>Create a QR code from text or a website.</p>
-
-      <button
-        class="tool-btn"
-        data-action="qr">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="word counter words characters text">
-
-      <div class="tool-icon">🔢</div>
-
-      <h3>Word Counter</h3>
-
-      <p>Count words and characters instantly.</p>
-
-      <button
-        class="tool-btn"
-        data-action="text"
-        data-text-tool="counter">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="case converter uppercase lowercase text">
-
-      <div class="tool-icon">Aa</div>
-
-      <h3>Case Converter</h3>
-
-      <p>Convert text to uppercase, lowercase or title case.</p>
-
-      <button
-        class="tool-btn"
-        data-action="text"
-        data-text-tool="case">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="clean text remove spaces">
-
-      <div class="tool-icon">🧹</div>
-
-      <h3>Text Cleaner</h3>
-
-      <p>Remove unnecessary spaces and blank lines.</p>
-
-      <button
-        class="tool-btn"
-        data-action="text"
-        data-text-tool="clean">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="password random secure generator">
-
-      <div class="tool-icon">🔐</div>
-
-      <h3>Password Generator</h3>
-
-      <p>Generate random passwords in your browser.</p>
-
-      <button
-        class="tool-btn"
-        data-action="password">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="calculator math calculate">
-
-      <div class="tool-icon">🧮</div>
-
-      <h3>Quick Calculator</h3>
-
-      <p>Calculate everyday mathematical expressions.</p>
-
-      <button
-        class="tool-btn"
-        data-action="calculator">
-        Use tool →
-      </button>
-          <article class="tool-card"
-      data-search="background remover remove background transparent png">
-
-      <div class="tool-icon">✂️</div>
-
-      <h3>Background Remover</h3>
-
-      <p>Remove a simple background and create a transparent PNG.</p>
-
-      <button
-        class="tool-btn"
-        data-action="background">
-        Use tool →
-      </button>
-
-    </article>
-
-
-    <article class="tool-card"
-      data-search="dslr look photo enhancer camera sharpness">
-
-      <div class="tool-icon">📷</div>
-
-      <h3>DSLR Look</h3>
-
-      <p>Make your photo sharper, richer and more camera-like.</p>
-
-      <button
-        class="tool-btn"
-        data-action="enhance">
-        Use tool →
-      </button>
-
-    </article>
-
-
-  </div>
-</section>
-
-
-<section id="popular" class="section feature-section">
-
-  <div class="feature-grid">
-
-    <div class="feature">
-      <div class="feature-icon">⚡</div>
-      <h3>Fast</h3>
-      <p>
-        Most image tools work directly inside your browser.
-      </p>
-    </div>
-
-    <div class="feature">
-      <div class="feature-icon">🔒</div>
-      <h3>Private</h3>
-      <p>
-        Images are processed locally instead of being uploaded
-        to a FileFox server.
-      </p>
-    </div>
-
-    <div class="feature">
-      <div class="feature-icon">📱</div>
-      <h3>Mobile friendly</h3>
-      <p>
-        Designed to work comfortably on phones and computers.
-      </p>
-    </div>
-
-  </div>
-
-</section>
-
-
-<section id="faq" class="section faq-section">
-
-  <span class="eyebrow">FAQ</span>
-
-  <h2>Frequently asked questions</h2>
-
-  <div class="faq-list">
-
-    <details>
-      <summary>Are the image tools free?</summary>
-      <p>
-        Yes. The tools on this website are designed to be free to use.
-      </p>
-    </details>
-
-    <details>
-      <summary>Are my images uploaded?</summary>
-      <p>
-        The image conversion and compression tools process images
-        locally in your browser.
-      </p>
-    </details>
-
-    <details>
-      <summary>Can I use FileFox on my phone?</summary>
-      <p>
-        Yes. FileFox is designed to work on mobile browsers as well
-        as desktop browsers.
-      </p>
-    </details>
-
-    <details>
-      <summary>Why does QR generation need internet?</summary>
-      <p>
-        The QR generator uses a small external JavaScript library.
-      </p>
-    </details>
-
-  </div>
-
-</section>
-
-</main>
-
-
-<footer class="footer">
-
-  <div class="footer-inner">
-
-    <div>
-      <strong>FileFox</strong>
-      <p>Simple online tools for everyday file tasks.</p>
-    </div>
-
-    <div>
-      <span>© <span id="year"></span> FileFox</span>
-    </div>
-
-  </div>
-
-</footer>
-
-
-<div
-  id="modal"
-  class="modal"
-  aria-hidden="true">
-
-  <div class="modal-box">
-
-    <button
-      class="modal-close"
-      data-close
-      aria-label="Close">
-      ×
-    </button>
-
-    <div id="modalContent"></div>
-
-  </div>
-
-</div>
-
-
-<script src="script.js"></script>
+  <script src="script.js"></script>
 
 </body>
-  </html>
+          </html>
