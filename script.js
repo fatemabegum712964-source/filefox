@@ -1,9 +1,13 @@
-'use strict';
+"use strict";
 
 /* =========================================================
    FILEFOX V2
-   One unified tool system
-   ========================================================= */
+   Stable browser-only JavaScript
+   No TensorFlow / MediaPipe dependency
+========================================================= */
+
+
+/* ---------- BASIC HELPERS ---------- */
 
 const $ = (selector, root = document) =>
   root.querySelector(selector);
@@ -12,229 +16,258 @@ const $$ = (selector, root = document) =>
   [...root.querySelectorAll(selector)];
 
 
-/* =========================================================
-   GLOBAL STATE
-   ========================================================= */
-
-const state = {
-  image: null,
-  file: null,
-  lastObjectUrl: null
-};
-
-
-const dialog = $('#toolDialog');
-const dialogBody = $('#dialogBody');
-const dialogTitle = $('#dialogTitle');
-const dialogSubtitle = $('#dialogSubtitle');
-const toast = $('#toast');
+const modal = $("#modal");
+const modalContent = $("#modalContent");
+const modalClose = $("#modalClose");
+const modalBackdrop = $("#modalBackdrop");
+const toolsGrid = $("#toolsGrid");
+const searchInput = $("#toolSearch");
+const count = $("#toolCount");
+const year = $("#year");
+const themeBtn = $("#themeBtn");
 
 
-/* =========================================================
-   TOOL INFORMATION
-   ========================================================= */
+/* ---------- STARTUP ---------- */
 
-const toolMeta = {
+year.textContent = new Date().getFullYear();
 
-  convert: [
-    'Image Converter',
-    'Convert JPG, PNG and WebP in your browser.'
-  ],
-
-  compress: [
-    'Image Compressor',
-    'Reduce image size while keeping good quality.'
-  ],
-
-  resize: [
-    'Image Resizer',
-    'Resize an image with optional aspect-ratio lock.'
-  ],
-
-  crop: [
-    'Image Cropper',
-    'Crop using precise pixel coordinates.'
-  ],
-
-  rotate: [
-    'Rotate & Flip',
-    'Rotate, mirror and download an image.'
-  ],
-
-  enhance: [
-    'Photo Enhancer',
-    'Create a cleaner, sharper, more polished photo look.'
-  ],
-
-  background: [
-    'Background Cleaner',
-    'Remove a similar plain background and export PNG.'
-  ],
-
-  pdf: [
-    'Image to PDF',
-    'Prepare an image for Chrome print / Save as PDF.'
-  ],
-
-  qr: [
-    'QR Code Generator',
-    'Create a QR code from text or a link.'
-  ],
-
-  text: [
-    'Text Toolkit',
-    'Count, change case and clean text.'
-  ],
-
-  password: [
-    'Password Generator',
-    'Generate a strong random password locally.'
-  ],
-
-  calculator: [
-    'Quick Calculator',
-    'Calculate simple expressions locally.'
-  ],
-
-  json: [
-    'JSON Formatter',
-    'Format and validate JSON locally.'
-  ],
-
-  url: [
-    'URL Encoder / Decoder',
-    'Encode or decode URL text.'
-  ],
-
-  html: [
-    'HTML Entity Tool',
-    'Encode or decode HTML entities.'
-  ],
-
-  slug: [
-    'Text to Slug',
-    'Turn a title into a clean URL slug.'
-  ],
-
-  duplicate: [
-    'Remove Duplicate Lines',
-    'Remove repeated lines while keeping order.'
-  ],
-
-  reverse: [
-    'Text Reverser',
-    'Reverse characters or lines.'
-  ],
-
-  lines: [
-    'Line Counter',
-    'Count lines, non-empty lines and characters.'
-  ],
-
-  base64: [
-    'Base64 Encoder / Decoder',
-    'Encode or decode text locally.'
-  ],
-
-  uuid: [
-    'UUID Generator',
-    'Generate UUIDs locally in your browser.'
-  ]
-
-};
+count.textContent =
+  `${$$(".tool-card").length} tools`;
 
 
-/* =========================================================
-   HELPERS
-   ========================================================= */
+/* ---------- THEME ---------- */
 
-function escapeHTML(value) {
+const savedTheme =
+  localStorage.getItem("filefox-theme");
 
-  return String(value).replace(
-    /[&<>'"]/g,
-    character => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      "'": '&#39;',
-      '"': '&quot;'
-    }[character])
+if (savedTheme === "dark") {
+  document.body.classList.add("dark");
+  themeBtn.textContent = "☀";
+}
+
+themeBtn.onclick = () => {
+  document.body.classList.toggle("dark");
+
+  const dark =
+    document.body.classList.contains("dark");
+
+  localStorage.setItem(
+    "filefox-theme",
+    dark ? "dark" : "light"
   );
 
+  themeBtn.textContent =
+    dark ? "☀" : "☾";
+};
+
+
+/* ---------- SEARCH ---------- */
+
+searchInput.addEventListener("input", () => {
+
+  const q =
+    searchInput.value.trim().toLowerCase();
+
+  let visible = 0;
+
+  $$(".tool-card").forEach(card => {
+
+    const text =
+      (card.dataset.search || "")
+        .toLowerCase();
+
+    const show =
+      !q || text.includes(q);
+
+    card.style.display =
+      show ? "" : "none";
+
+    if (show) visible++;
+  });
+
+  count.textContent =
+    q
+      ? `${visible} matching tools`
+      : `${$$(".tool-card").length} tools`;
+});
+
+
+/* ---------- MODAL ---------- */
+
+function openModal(html) {
+
+  modalContent.innerHTML = html;
+
+  modal.classList.add("show");
+  modal.setAttribute("aria-hidden", "false");
+
+  document.body.style.overflow = "hidden";
 }
 
 
-function showToast(message, type = 'ok') {
+function closeModal() {
 
-  toast.textContent = message;
+  modal.classList.remove("show");
+  modal.setAttribute("aria-hidden", "true");
 
-  toast.dataset.type = type;
+  modalContent.innerHTML = "";
 
-  toast.classList.add('show');
-
-  clearTimeout(showToast.timer);
-
-  showToast.timer = setTimeout(() => {
-
-    toast.classList.remove('show');
-
-  }, 2800);
-
+  document.body.style.overflow = "";
 }
 
 
-function formatBytes(bytes) {
+modalClose.onclick = closeModal;
+modalBackdrop.onclick = closeModal;
 
-  if (!Number.isFinite(bytes)) {
-    return '—';
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    closeModal();
   }
+});
 
-  if (bytes < 1024) {
-    return `${bytes} B`;
+
+/* ---------- EVENT DELEGATION ---------- */
+
+toolsGrid.addEventListener("click", event => {
+
+  const button =
+    event.target.closest(".tool-btn");
+
+  if (!button) return;
+
+  const action =
+    button.dataset.action;
+
+  try {
+
+    if (action === "image") {
+      imageTool(button.dataset.type);
+
+    } else if (action === "compress") {
+      compressTool();
+
+    } else if (action === "resize") {
+      resizeTool();
+
+    } else if (action === "crop") {
+      cropTool();
+
+    } else if (action === "rotate") {
+      rotateTool();
+
+    } else if (action === "flip") {
+      flipTool();
+
+    } else if (action === "enhance") {
+      enhanceTool();
+
+    } else if (action === "background") {
+      backgroundTool();
+
+    } else if (action === "pdf") {
+      pdfTool();
+
+    } else if (action === "qr") {
+      qrTool();
+
+    } else if (action === "text") {
+      textTool(button.dataset.textTool);
+
+    } else if (action === "password") {
+      passwordTool();
+
+    } else if (action === "calculator") {
+      calculatorTool();
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    showError(
+      "Something went wrong. Please try again."
+    );
   }
+});
 
-  if (bytes < 1024 ** 2) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
-  }
 
-  return `${(bytes / 1024 ** 2).toFixed(2)} MB`;
+/* =========================================================
+   FILE / IMAGE HELPERS
+========================================================= */
 
+function filePicker(accept = "image/*") {
+
+  return new Promise((resolve, reject) => {
+
+    const input =
+      document.createElement("input");
+
+    input.type = "file";
+    input.accept = accept;
+
+    input.onchange = () => {
+
+      const file = input.files?.[0];
+
+      if (!file) {
+        reject(
+          new Error("No file selected.")
+        );
+        return;
+      }
+
+      resolve(file);
+    };
+
+    input.click();
+  });
 }
 
 
-function downloadBlob(blob, filename) {
+function readDataURL(file) {
 
-  if (!blob) {
-    throw new Error('No output was created.');
-  }
+  return new Promise((resolve, reject) => {
 
-  const url = URL.createObjectURL(blob);
+    const reader =
+      new FileReader();
 
-  const link = document.createElement('a');
+    reader.onload = () =>
+      resolve(reader.result);
 
-  link.href = url;
+    reader.onerror = () =>
+      reject(
+        new Error("Could not read the file.")
+      );
 
-  link.download = filename;
+    reader.readAsDataURL(file);
+  });
+}
 
-  document.body.appendChild(link);
 
-  link.click();
+function loadImage(src) {
 
-  link.remove();
+  return new Promise((resolve, reject) => {
 
-  setTimeout(() => {
+    const img =
+      new Image();
 
-    URL.revokeObjectURL(url);
+    img.onload = () =>
+      resolve(img);
 
-  }, 1500);
+    img.onerror = () =>
+      reject(
+        new Error("Could not decode this image.")
+      );
 
+    img.src = src;
+  });
 }
 
 
 function canvasBlob(
   canvas,
-  type = 'image/png',
-  quality = 0.92
+  type = "image/png",
+  quality = .9
 ) {
 
   return new Promise((resolve, reject) => {
@@ -242,4313 +275,2501 @@ function canvasBlob(
     canvas.toBlob(
       blob => {
 
-        if (blob) {
-          resolve(blob);
-        } else {
+        if (!blob) {
           reject(
-            new Error(
-              'This browser could not create the image.'
-            )
+            new Error("Image export failed.")
           );
+          return;
         }
 
+        resolve(blob);
       },
       type,
       quality
     );
-
   });
-
 }
 
 
-function loadImage(file) {
+function downloadBlob(blob, filename) {
 
-  return new Promise((resolve, reject) => {
+  const url =
+    URL.createObjectURL(blob);
 
-    if (
-      !file ||
-      !file.type.startsWith('image/')
-    ) {
+  const a =
+    document.createElement("a");
 
-      reject(
-        new Error(
-          'Please choose an image file.'
-        )
-      );
+  a.href = url;
+  a.download = filename;
 
-      return;
-    }
+  document.body.appendChild(a);
 
-    const url = URL.createObjectURL(file);
+  a.click();
 
-    const image = new Image();
+  a.remove();
 
-    image.onload = () => {
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 1500);
+}
 
-      URL.revokeObjectURL(url);
 
-      resolve(image);
+function formatBytes(bytes) {
 
+  if (!bytes) return "0 B";
+
+  const units =
+    ["B", "KB", "MB", "GB"];
+
+  const i =
+    Math.floor(
+      Math.log(bytes) /
+      Math.log(1024)
+    );
+
+  return (
+    (bytes /
+      Math.pow(1024, i))
+      .toFixed(i ? 1 : 0)
+    + " "
+    + units[i]
+  );
+}
+
+
+function safeDimension(
+  width,
+  height,
+  max = 2600
+) {
+
+  const largest =
+    Math.max(width, height);
+
+  if (largest <= max) {
+    return {
+      width,
+      height
     };
-
-    image.onerror = () => {
-
-      URL.revokeObjectURL(url);
-
-      reject(
-        new Error(
-          'The image could not be opened.'
-        )
-      );
-
-    };
-
-    image.src = url;
-
-  });
-
-}
-
-
-function safeName(
-  file,
-  suffix,
-  extension
-) {
-
-  const base =
-    (file?.name || 'file')
-      .replace(/\.[^.]+$/, '')
-      .replace(
-        /[^a-z0-9_-]+/gi,
-        '-'
-      )
-      .replace(
-        /^-+|-+$/g,
-        ''
-      )
-    || 'file';
-
-  return `${base}-${suffix}.${extension}`;
-
-}
-
-
-function closeDialog() {
-
-  if (dialog?.open) {
-
-    dialog.close();
-
   }
 
-  dialogBody.innerHTML = '';
+  const ratio =
+    max / largest;
 
-  state.image = null;
-
-  state.file = null;
-
+  return {
+    width: Math.round(width * ratio),
+    height: Math.round(height * ratio)
+  };
 }
 
 
-function openDialog(action) {
+function makeCanvas(width, height) {
 
-  const meta =
-    toolMeta[action] ||
-    [
-      'FileFox Tool',
-      ''
-    ];
+  const canvas =
+    document.createElement("canvas");
 
-  dialogTitle.textContent = meta[0];
+  canvas.width =
+    Math.max(1, Math.round(width));
 
-  dialogSubtitle.textContent = meta[1];
+  canvas.height =
+    Math.max(1, Math.round(height));
 
-  dialogBody.innerHTML = '';
-
-  try {
-
-    if (
-      typeof dialog.showModal === 'function'
-    ) {
-
-      dialog.showModal();
-
-    } else {
-
-      dialog.setAttribute(
-        'open',
-        ''
-      );
-
-    }
-
-    renderTool(action);
-
-  } catch (error) {
-
-    closeDialog();
-
-    showToast(
-      error.message ||
-      'Could not open this tool.',
-      'error'
-    );
-
-  }
-
-}
-
-
-function imagePicker(extra = '') {
-
-  return `
-
-    <div
-      class="dropzone"
-      id="dropzone"
-    >
-
-      <input
-        id="fileInput"
-        type="file"
-        accept="image/*"
-        hidden
-      >
-
-      <button
-        class="drop-button"
-        id="pickBtn"
-        type="button"
-      >
-
-        <span class="drop-icon">
-          ↥
-        </span>
-
-        <span>
-
-          <strong>
-            Choose image
-          </strong>
-
-          <small>
-            JPG, PNG or WebP
-          </small>
-
-        </span>
-
-      </button>
-
-      ${extra}
-
-    </div>
-
-  `;
-
-}
-
-
-function resultBox(
-  id = 'resultBox'
-) {
-
-  return `
-    <div
-      class="tool-result"
-      id="${id}"
-    ></div>
-  `;
-
-}
-
-
-function wirePicker(onFile) {
-
-  const input = $('#fileInput');
-
-  const pick = $('#pickBtn');
-
-  const zone = $('#dropzone');
-
-
-  pick?.addEventListener(
-    'click',
-    () => input.click()
-  );
-
-
-  input?.addEventListener(
-    'change',
-    () => {
-
-      if (input.files[0]) {
-
-        onFile(input.files[0]);
-
-      }
-
-    }
-  );
-
-
-  [
-    'dragenter',
-    'dragover'
-  ].forEach(eventName => {
-
-    zone?.addEventListener(
-      eventName,
-      event => {
-
-        event.preventDefault();
-
-        zone.classList.add('drag');
-
-      }
-    );
-
-  });
-
-
-  [
-    'dragleave',
-    'drop'
-  ].forEach(eventName => {
-
-    zone?.addEventListener(
-      eventName,
-      event => {
-
-        event.preventDefault();
-
-        zone.classList.remove('drag');
-
-      }
-    );
-
-  });
-
-
-  zone?.addEventListener(
-    'drop',
-    event => {
-
-      const file =
-        event.dataTransfer.files[0];
-
-      if (file) {
-
-        onFile(file);
-
-      }
-
-    }
-  );
-
-}
-
-
-function renderPreview(
-  result,
-  image,
-  file
-) {
-
-  result.innerHTML = `
-
-    <div class="preview-card">
-
-      <img
-        src="${image.src}"
-        alt="Preview"
-      >
-
-      <div class="preview-info">
-
-        <b>
-          ${escapeHTML(file.name)}
-        </b>
-
-        <span>
-          ${image.naturalWidth}
-          ×
-          ${image.naturalHeight}
-          ·
-          ${formatBytes(file.size)}
-        </span>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-function renderTool(action) {
-
-  const renderer =
-    toolRenderers[action];
-
-  if (!renderer) {
-
-    errorPanel(
-      'This tool is not configured yet.'
-    );
-
-    return;
-
-  }
-
-  try {
-
-    renderer();
-
-  } catch (error) {
-
-    errorPanel(
-      error.message ||
-      'Something went wrong.'
-    );
-
-  }
-
-}
-
-
-function errorPanel(message) {
-
-  dialogBody.innerHTML = `
-
-    <div class="error-panel">
-
-      <strong>
-        Tool error
-      </strong>
-
-      <p>
-        ${escapeHTML(message)}
-      </p>
-
-      <button
-        class="primary"
-        data-close-dialog
-        type="button"
-      >
-        Close
-      </button>
-
-    </div>
-
-  `;
-
+  return canvas;
 }
 
 
 /* =========================================================
-   IMAGE TRANSFORM
-   ========================================================= */
+   COMMON IMAGE UI
+========================================================= */
 
-async function imageTransform(
-  file,
-  draw,
-  type,
-  quality,
-  suffix,
-  extension
+function imagePickerUI(
+  title,
+  subtitle,
+  buttonText = "Choose image"
 ) {
 
-  const image =
-    await loadImage(file);
+  return `
+    <h2 class="modal-title">${escapeHTML(title)}</h2>
 
-  const canvas =
-    document.createElement('canvas');
+    <p class="modal-subtitle">
+      ${escapeHTML(subtitle)}
+    </p>
 
-  draw(
-    canvas,
-    image
-  );
+    <div class="drop-zone">
+      <button class="choose-btn" id="chooseFile">
+        ${escapeHTML(buttonText)}
+      </button>
 
-  const blob =
-    await canvasBlob(
-      canvas,
-      type,
-      quality
-    );
+      <p class="status" id="fileStatus">
+        JPG, PNG or WebP
+      </p>
+    </div>
 
-  downloadBlob(
-    blob,
-    safeName(
-      file,
-      suffix,
-      extension
+    <div id="workArea"></div>
+  `;
+}
+
+
+/* =========================================================
+   IMAGE CONVERSION
+========================================================= */
+
+const conversionConfig = {
+
+  "jpg-png": {
+    title: "JPG → PNG",
+    output: "image/png",
+    ext: "png"
+  },
+
+  "png-jpg": {
+    title: "PNG → JPG",
+    output: "image/jpeg",
+    ext: "jpg"
+  },
+
+  "jpg-webp": {
+    title: "JPG → WebP",
+    output: "image/webp",
+    ext: "webp"
+  },
+
+  "png-webp": {
+    title: "PNG → WebP",
+    output: "image/webp",
+    ext: "webp"
+  },
+
+  "webp-jpg": {
+    title: "WebP → JPG",
+    output: "image/jpeg",
+    ext: "jpg"
+  },
+
+  "webp-png": {
+    title: "WebP → PNG",
+    output: "image/png",
+    ext: "png"
+  }
+};
+
+
+function imageTool(type) {
+
+  const config =
+    conversionConfig[type];
+
+  if (!config) return;
+
+  openModal(
+    imagePickerUI(
+      config.title,
+      "Select an image and convert it directly in your browser."
     )
   );
 
-  showToast(
-    `Downloaded ${formatBytes(blob.size)}`
-  );
+  $("#chooseFile").onclick = async () => {
 
+    try {
+
+      const file =
+        await filePicker("image/*");
+
+      const src =
+        await readDataURL(file);
+
+      const img =
+        await loadImage(src);
+
+      const size =
+        safeDimension(
+          img.naturalWidth,
+          img.naturalHeight
+        );
+
+      $("#fileStatus").textContent =
+        `${file.name} • ${formatBytes(file.size)}`;
+
+      $("#workArea").innerHTML = `
+
+        <img
+          class="preview"
+          id="imagePreview"
+          alt="Preview">
+
+        <div class="stats">
+          <div class="stat">
+            <strong>${img.naturalWidth}</strong>
+            <small>Original width</small>
+          </div>
+
+          <div class="stat">
+            <strong>${img.naturalHeight}</strong>
+            <small>Original height</small>
+          </div>
+
+          <div class="stat">
+            <strong>${formatBytes(file.size)}</strong>
+            <small>Original size</small>
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button class="primary-btn" id="convertBtn">
+            Convert to ${config.ext.toUpperCase()}
+          </button>
+        </div>
+
+        <div id="result"></div>
+      `;
+
+      $("#imagePreview").src =
+        src;
+
+      $("#convertBtn").onclick =
+        async () => {
+
+          try {
+
+            $("#convertBtn").disabled =
+              true;
+
+            $("#convertBtn").textContent =
+              "Processing...";
+
+            const canvas =
+              makeCanvas(
+                size.width,
+                size.height
+              );
+
+            const ctx =
+              canvas.getContext("2d");
+
+            if (config.output === "image/jpeg") {
+
+              ctx.fillStyle = "#ffffff";
+
+              ctx.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+              );
+            }
+
+            ctx.drawImage(
+              img,
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+
+            const blob =
+              await canvasBlob(
+                canvas,
+                config.output,
+                .92
+              );
+
+            downloadBlob(
+              blob,
+              "filefox-converted."
+              + config.ext
+            );
+
+            $("#result").innerHTML = `
+              <div class="result">
+                <strong>✓ Conversion complete</strong>
+                <div class="status">
+                  ${formatBytes(blob.size)}
+                </div>
+              </div>
+            `;
+
+          } catch (error) {
+
+            showError(
+              error.message
+            );
+
+          } finally {
+
+            $("#convertBtn").disabled =
+              false;
+
+            $("#convertBtn").textContent =
+              `Convert to ${config.ext.toUpperCase()}`;
+          }
+        };
+
+    } catch (error) {
+
+      showError(
+        error.message
+      );
+    }
+  };
 }
 
 
 /* =========================================================
-   TOOL RENDERERS
-   ========================================================= */
+   COMPRESSOR
+========================================================= */
 
-const toolRenderers = {
+function compressTool() {
 
+  openModal(
+    imagePickerUI(
+      "Image Compressor",
+      "Reduce image size with adjustable quality."
+    )
+  );
 
-  /* IMAGE CONVERTER */
+  $("#chooseFile").onclick = async () => {
 
-  convert() {
+    try {
 
-    dialogBody.innerHTML = `
+      const file =
+        await filePicker("image/*");
 
-      ${imagePicker(`
+      const src =
+        await readDataURL(file);
 
-        <div class="control-grid one">
+      const img =
+        await loadImage(src);
 
-          <label>
+      $("#fileStatus").textContent =
+        `${file.name} • ${formatBytes(file.size)}`;
 
-            Output format
+      $("#workArea").innerHTML = `
 
-            <select id="format">
+        <img class="preview" id="compressPreview">
 
-              <option value="image/png">
-                PNG
-              </option>
+        <div class="tool-controls">
 
-              <option value="image/jpeg">
-                JPG
-              </option>
-
-              <option value="image/webp">
-                WebP
-              </option>
-
-            </select>
-
-          </label>
-
-        </div>
-
-        ${resultBox()}
-
-      `)}
-
-    `;
-
-
-    wirePicker(
-      async file => {
-
-        try {
-
-          const image =
-            await loadImage(file);
-
-          state.file = file;
-
-          state.image = image;
-
-          const result =
-            $('#resultBox');
-
-          renderPreview(
-            result,
-            image,
-            file
-          );
-
-
-          result.insertAdjacentHTML(
-            'beforeend',
-            `
-
-              <div class="tool-actions">
-
-                <button
-                  class="primary"
-                  id="run"
-                >
-                  Convert & Download
-                </button>
-
-              </div>
-
-            `
-          );
-
-
-          $('#run').onclick =
-            async () => {
-
-              try {
-
-                const type =
-                  $('#format').value;
-
-                const extension =
-                  type === 'image/jpeg'
-                    ? 'jpg'
-                    : type.split('/')[1];
-
-
-                await imageTransform(
-
-                  file,
-
-                  (
-                    canvas,
-                    img
-                  ) => {
-
-                    canvas.width =
-                      img.naturalWidth;
-
-                    canvas.height =
-                      img.naturalHeight;
-
-                    const context =
-                      canvas.getContext('2d');
-
-                    if (
-                      type === 'image/jpeg'
-                    ) {
-
-                      context.fillStyle =
-                        '#ffffff';
-
-                      context.fillRect(
-                        0,
-                        0,
-                        canvas.width,
-                        canvas.height
-                      );
-
-                    }
-
-                    context.drawImage(
-                      img,
-                      0,
-                      0
-                    );
-
-                  },
-
-                  type,
-
-                  0.92,
-
-                  'converted',
-
-                  extension
-
-                );
-
-              } catch (error) {
-
-                showToast(
-                  error.message,
-                  'error'
-                );
-
-              }
-
-            };
-
-
-        } catch (error) {
-
-          showToast(
-            error.message,
-            'error'
-          );
-
-        }
-
-      }
-    );
-
-  },
-
-
-  /* COMPRESS */
-
-  compress() {
-
-    dialogBody.innerHTML = `
-
-      ${imagePicker(`
-
-        <div class="control-grid one">
-
-          <label>
-
-            Quality
-
-            <output id="qualityOut">
-              80%
-            </output>
+          <div class="control">
+            <label>
+              Quality:
+              <strong id="qualityValue">80</strong>%
+            </label>
 
             <input
               id="quality"
               type="range"
-              min="30"
+              min="20"
               max="100"
-              value="80"
-            >
+              value="80">
+          </div>
 
-          </label>
+          <button class="primary-btn" id="compressBtn">
+            Compress image
+          </button>
 
         </div>
 
-        ${resultBox()}
+        <div id="compressResult"></div>
+      `;
 
-      `)}
+      $("#compressPreview").src =
+        src;
 
-    `;
+      $("#quality").oninput = () => {
+
+        $("#qualityValue").textContent =
+          $("#quality").value;
+      };
+
+      $("#compressBtn").onclick =
+        async () => {
+
+          try {
+
+            const quality =
+              Number(
+                $("#quality").value
+              ) / 100;
+
+            const size =
+              safeDimension(
+                img.naturalWidth,
+                img.naturalHeight,
+                2400
+              );
+
+            const canvas =
+              makeCanvas(
+                size.width,
+                size.height
+              );
+
+            const ctx =
+              canvas.getContext("2d");
+
+            ctx.drawImage(
+              img,
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+
+            const type =
+              file.type === "image/png"
+                ? "image/webp"
+                : "image/jpeg";
+
+            const ext =
+              type === "image/webp"
+                ? "webp"
+                : "jpg";
+
+            const blob =
+              await canvasBlob(
+                canvas,
+                type,
+                quality
+              );
+
+            downloadBlob(
+              blob,
+              `filefox-compressed.${ext}`
+            );
+
+            const saved =
+              file.size > blob.size
+                ? Math.round(
+                    (1 - blob.size / file.size) * 100
+                  )
+                : 0;
+
+            $("#compressResult").innerHTML = `
+              <div class="result">
+                <strong>✓ Done</strong>
+                <div class="status">
+                  Original: ${formatBytes(file.size)}
+                  <br>
+                  New: ${formatBytes(blob.size)}
+                  <br>
+                  Approx. reduction: ${saved}%
+                </div>
+              </div>
+            `;
+
+          } catch (error) {
+
+            showError(
+              error.message
+            );
+          }
+        };
+
+    } catch (error) {
+
+      showError(
+        error.message
+      );
+    }
+  };
+}
 
 
-    $('#quality').oninput = () => {
+/* =========================================================
+   RESIZER
+========================================================= */
 
-      $('#qualityOut').textContent =
-        `${$('#quality').value}%`;
+function resizeTool() {
 
-    };
+  openModal(
+    imagePickerUI(
+      "Image Resizer",
+      "Choose an image and set its exact dimensions."
+    )
+  );
+
+  $("#chooseFile").onclick = async () => {
+
+    try {
+
+      const file =
+        await filePicker("image/*");
+
+      const src =
+        await readDataURL(file);
+
+      const img =
+        await loadImage(src);
+
+      $("#fileStatus").textContent =
+        `${file.name} • ${formatBytes(file.size)}`;
+
+      $("#workArea").innerHTML = `
+
+        <img class="preview" id="resizePreview">
+
+        <div class="tool-controls">
+
+          <div class="control">
+            <label>Width</label>
+            <input
+              id="newWidth"
+              type="number"
+              min="1"
+              value="${img.naturalWidth}">
+          </div>
+
+          <div class="control">
+            <label>Height</label>
+            <input
+              id="newHeight"
+              type="number"
+              min="1"
+              value="${img.naturalHeight}">
+          </div>
+
+          <button class="primary-btn" id="resizeBtn">
+            Resize & Download
+          </button>
+
+        </div>
+
+        <div id="resizeResult"></div>
+      `;
+
+      $("#resizePreview").src =
+        src;
+
+      $("#resizeBtn").onclick =
+        async () => {
+
+          try {
+
+            const width =
+              Number($("#newWidth").value);
+
+            const height =
+              Number($("#newHeight").value);
+
+            if (
+              !width ||
+              !height ||
+              width < 1 ||
+              height < 1
+            ) {
+              throw new Error(
+                "Enter valid dimensions."
+              );
+            }
+
+            if (
+              width > 5000 ||
+              height > 5000
+            ) {
+              throw new Error(
+                "Maximum dimension is 5000px."
+              );
+            }
+
+            const canvas =
+              makeCanvas(
+                width,
+                height
+              );
+
+            const ctx =
+              canvas.getContext("2d");
+
+            ctx.drawImage(
+              img,
+              0,
+              0,
+              width,
+              height
+            );
+
+            const blob =
+              await canvasBlob(
+                canvas,
+                "image/png"
+              );
+
+            downloadBlob(
+              blob,
+              "filefox-resized.png"
+            );
+
+            $("#resizeResult").innerHTML =
+              `<div class="result">✓ Image resized successfully.</div>`;
+
+          } catch (error) {
+
+            showError(
+              error.message
+            );
+          }
+        };
+
+    } catch (error) {
+
+      showError(
+        error.message
+      );
+    }
+  };
+}
 
 
-    wirePicker(
-      async file => {
+/* =========================================================
+   CROP
+========================================================= */
 
-        try {
+function cropTool() {
 
-          const image =
-            await loadImage(file);
+  openModal(
+    imagePickerUI(
+      "Image Cropper",
+      "Set X, Y, width and height for your crop."
+    )
+  );
 
-          state.file = file;
+  $("#chooseFile").onclick = async () => {
 
-          state.image = image;
+    try {
 
-          const result =
-            $('#resultBox');
+      const file =
+        await filePicker("image/*");
 
-          renderPreview(
-            result,
-            image,
-            file
+      const src =
+        await readDataURL(file);
+
+      const img =
+        await loadImage(src);
+
+      $("#workArea").innerHTML = `
+
+        <img class="preview" id="cropPreview">
+
+        <div class="tool-controls">
+
+          <div class="control">
+            <label>X</label>
+            <input id="cropX" type="number" value="0" min="0">
+          </div>
+
+          <div class="control">
+            <label>Y</label>
+            <input id="cropY" type="number" value="0" min="0">
+          </div>
+
+          <div class="control">
+            <label>Width</label>
+            <input
+              id="cropW"
+              type="number"
+              value="${img.naturalWidth}"
+              min="1">
+          </div>
+
+          <div class="control">
+            <label>Height</label>
+            <input
+              id="cropH"
+              type="number"
+              value="${img.naturalHeight}"
+              min="1">
+          </div>
+
+          <button class="primary-btn" id="cropBtn">
+            Crop & Download
+          </button>
+
+        </div>
+      `;
+
+      $("#fileStatus").textContent =
+        `${file.name} • ${img.naturalWidth} × ${img.naturalHeight}`;
+
+      $("#cropPreview").src =
+        src;
+
+      $("#cropBtn").onclick =
+        async () => {
+
+          try {
+
+            const x =
+              Number($("#cropX").value);
+
+            const y =
+              Number($("#cropY").value);
+
+            const w =
+              Number($("#cropW").value);
+
+            const h =
+              Number($("#cropH").value);
+
+            if (
+              x < 0 ||
+              y < 0 ||
+              w <= 0 ||
+              h <= 0 ||
+              x + w > img.naturalWidth ||
+              y + h > img.naturalHeight
+            ) {
+              throw new Error(
+                "Crop area is outside the image."
+              );
+            }
+
+            const canvas =
+              makeCanvas(w, h);
+
+            const ctx =
+              canvas.getContext("2d");
+
+            ctx.drawImage(
+              img,
+              x,
+              y,
+              w,
+              h,
+              0,
+              0,
+              w,
+              h
+            );
+
+            const blob =
+              await canvasBlob(
+                canvas,
+                "image/png"
+              );
+
+            downloadBlob(
+              blob,
+              "filefox-cropped.png"
+            );
+
+          } catch (error) {
+
+            showError(
+              error.message
+            );
+          }
+        };
+
+    } catch (error) {
+
+      showError(
+        error.message
+      );
+    }
+  };
+}
+
+
+/* =========================================================
+   ROTATE
+========================================================= */
+
+function rotateTool() {
+
+  openModal(
+    imagePickerUI(
+      "Image Rotator",
+      "Rotate your image by 90°, 180° or 270°."
+    )
+  );
+
+  $("#chooseFile").onclick = async () => {
+
+    try {
+
+      const file =
+        await filePicker("image/*");
+
+      const src =
+        await readDataURL(file);
+
+      const img =
+        await loadImage(src);
+
+      $("#workArea").innerHTML = `
+
+        <img class="preview" id="rotatePreview">
+
+        <div class="tool-controls">
+
+          <div class="control">
+            <label>Rotation</label>
+
+            <select id="rotation">
+              <option value="90">90°</option>
+              <option value="180">180°</option>
+              <option value="270">270°</option>
+            </select>
+          </div>
+
+          <button class="primary-btn" id="rotateBtn">
+            Rotate & Download
+          </button>
+
+        </div>
+      `;
+
+      $("#rotatePreview").src =
+        src;
+
+      $("#rotateBtn").onclick =
+        async () => {
+
+          const deg =
+            Number(
+              $("#rotation").value
+            );
+
+          const swap =
+            deg === 90 ||
+            deg === 270;
+
+          const canvas =
+            makeCanvas(
+              swap
+                ? img.naturalHeight
+                : img.naturalWidth,
+
+              swap
+                ? img.naturalWidth
+                : img.naturalHeight
+            );
+
+          const ctx =
+            canvas.getContext("2d");
+
+          ctx.translate(
+            canvas.width / 2,
+            canvas.height / 2
           );
 
-
-          result.insertAdjacentHTML(
-            'beforeend',
-            `
-
-              <div class="stats">
-
-                <span>
-                  Original
-                  <b>
-                    ${formatBytes(file.size)}
-                  </b>
-                </span>
-
-                <span>
-                  Dimensions
-                  <b>
-                    ${image.naturalWidth}
-                    ×
-                    ${image.naturalHeight}
-                  </b>
-                </span>
-
-                <span>
-                  Output
-                  <b>
-                    JPG
-                  </b>
-                </span>
-
-              </div>
-
-              <div class="tool-actions">
-
-                <button
-                  class="primary"
-                  id="run"
-                >
-                  Compress & Download
-                </button>
-
-              </div>
-
-            `
+          ctx.rotate(
+            deg * Math.PI / 180
           );
 
+          ctx.drawImage(
+            img,
+            -img.naturalWidth / 2,
+            -img.naturalHeight / 2
+          );
 
-          $('#run').onclick =
-            async () => {
+          const blob =
+            await canvasBlob(
+              canvas,
+              "image/png"
+            );
 
-              try {
+          downloadBlob(
+            blob,
+            "filefox-rotated.png"
+          );
+        };
 
-                const quality =
-                  Number(
-                    $('#quality').value
-                  ) / 100;
+    } catch (error) {
 
-                const maximumDimension =
-                  2400;
-
-                const scale =
-                  Math.min(
-                    1,
-                    maximumDimension /
-                    Math.max(
-                      image.naturalWidth,
-                      image.naturalHeight
-                    )
-                  );
-
-
-                const canvas =
-                  document.createElement(
-                    'canvas'
-                  );
-
-                canvas.width =
-                  Math.max(
-                    1,
-                    Math.round(
-                      image.naturalWidth *
-                      scale
-                    )
-                  );
-
-                canvas.height =
-                  Math.max(
-                    1,
-                    Math.round(
-                      image.naturalHeight *
-                      scale
-                    )
-                  );
+      showError(
+        error.message
+      );
+    }
+  };
+}
 
 
-                const context =
-                  canvas.getContext(
-                    '2d',
-                    {
-                      alpha: false
-                    }
-                  );
+/* =========================================================
+   FLIP
+========================================================= */
+
+function flipTool() {
+
+  openModal(
+    imagePickerUI(
+      "Image Flipper",
+      "Mirror your image horizontally or vertically."
+    )
+  );
+
+  $("#chooseFile").onclick = async () => {
+
+    try {
+
+      const file =
+        await filePicker("image/*");
+
+      const src =
+        await readDataURL(file);
+
+      const img =
+        await loadImage(src);
+
+      $("#workArea").innerHTML = `
+
+        <img class="preview" id="flipPreview">
+
+        <div class="tool-controls">
+
+          <div class="control">
+            <label>Direction</label>
+
+            <select id="flipDirection">
+              <option value="horizontal">
+                Horizontal
+              </option>
+
+              <option value="vertical">
+                Vertical
+              </option>
+            </select>
+          </div>
+
+          <button class="primary-btn" id="flipBtn">
+            Flip & Download
+          </button>
+
+        </div>
+      `;
+
+      $("#flipPreview").src =
+        src;
+
+      $("#flipBtn").onclick =
+        async () => {
+
+          const horizontal =
+            $("#flipDirection").value ===
+            "horizontal";
+
+          const canvas =
+            makeCanvas(
+              img.naturalWidth,
+              img.naturalHeight
+            );
+
+          const ctx =
+            canvas.getContext("2d");
+
+          if (horizontal) {
+            ctx.translate(
+              canvas.width,
+              0
+            );
+
+            ctx.scale(-1, 1);
+
+          } else {
+
+            ctx.translate(
+              0,
+              canvas.height
+            );
+
+            ctx.scale(1, -1);
+          }
+
+          ctx.drawImage(
+            img,
+            0,
+            0
+          );
+
+          const blob =
+            await canvasBlob(
+              canvas,
+              "image/png"
+            );
+
+          downloadBlob(
+            blob,
+            "filefox-flipped.png"
+          );
+        };
+
+    } catch (error) {
+
+      showError(
+        error.message
+      );
+    }
+  };
+}
 
 
-                context.drawImage(
-                  image,
+/* =========================================================
+   DSLR LOOK / PHOTO ENHANCER
+========================================================= */
+
+function enhanceTool() {
+
+  openModal(
+    imagePickerUI(
+      "DSLR Look",
+      "Enhance brightness, contrast, color and sharpness."
+    )
+  );
+
+  $("#chooseFile").onclick = async () => {
+
+    try {
+
+      const file =
+        await filePicker("image/*");
+
+      const src =
+        await readDataURL(file);
+
+      const img =
+        await loadImage(src);
+
+      $("#workArea").innerHTML = `
+
+        <img class="preview" id="enhancePreview">
+
+        <div class="tool-controls">
+
+          <div class="control">
+            <label>
+              Brightness
+              <strong id="brightVal">0</strong>
+            </label>
+
+            <input
+              id="bright"
+              type="range"
+              min="-50"
+              max="50"
+              value="0">
+          </div>
+
+          <div class="control">
+            <label>
+              Contrast
+              <strong id="contrastVal">10</strong>
+            </label>
+
+            <input
+              id="contrast"
+              type="range"
+              min="-50"
+              max="50"
+              value="10">
+          </div>
+
+          <div class="control">
+            <label>
+              Saturation
+              <strong id="satVal">15</strong>
+            </label>
+
+            <input
+              id="sat"
+              type="range"
+              min="-50"
+              max="70"
+              value="15">
+          </div>
+
+          <div class="control">
+            <label>
+              Sharpness
+              <strong id="sharpVal">20</strong>
+            </label>
+
+            <input
+              id="sharp"
+              type="range"
+              min="0"
+              max="50"
+              value="20">
+          </div>
+
+          <div class="control">
+            <label>
+              Warmth
+              <strong id="warmVal">5</strong>
+            </label>
+
+            <input
+              id="warm"
+              type="range"
+              min="-30"
+              max="30"
+              value="5">
+          </div>
+
+          <button
+            class="secondary-btn"
+            id="autoEnhance">
+            ✨ Auto DSLR
+          </button>
+
+          <button
+            class="primary-btn"
+            id="enhanceBtn">
+            Enhance & Download
+          </button>
+
+        </div>
+      `;
+
+      $("#enhancePreview").src =
+        src;
+
+
+      const pairs = [
+        ["bright", "brightVal"],
+        ["contrast", "contrastVal"],
+        ["sat", "satVal"],
+        ["sharp", "sharpVal"],
+        ["warm", "warmVal"]
+      ];
+
+      pairs.forEach(([input, output]) => {
+
+        $("#" + input).oninput = () => {
+
+          $("#" + output).textContent =
+            $("#" + input).value;
+        };
+      });
+
+
+      $("#autoEnhance").onclick = () => {
+
+        const values = {
+          bright: 3,
+          contrast: 15,
+          sat: 18,
+          sharp: 28,
+          warm: 5
+        };
+
+        Object.entries(values)
+          .forEach(([id, value]) => {
+
+            $("#" + id).value =
+              value;
+
+            $("#" + id + "Val").textContent =
+              value;
+          });
+      };
+
+
+      $("#enhanceBtn").onclick =
+        async () => {
+
+          try {
+
+            const size =
+              safeDimension(
+                img.naturalWidth,
+                img.naturalHeight,
+                2200
+              );
+
+            const canvas =
+              makeCanvas(
+                size.width,
+                size.height
+              );
+
+            const ctx =
+              canvas.getContext("2d", {
+                willReadFrequently: true
+              });
+
+            ctx.drawImage(
+              img,
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+
+            const imageData =
+              ctx.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+              );
+
+            const data =
+              imageData.data;
+
+            const brightness =
+              Number($("#bright").value);
+
+            const contrast =
+              Number($("#contrast").value);
+
+            const saturation =
+              Number($("#sat").value);
+
+            const warmth =
+              Number($("#warm").value);
+
+            const contrastFactor =
+              (259 *
+                (contrast + 255)) /
+              (255 *
+                (259 - contrast));
+
+
+            for (
+              let i = 0;
+              i < data.length;
+              i += 4
+            ) {
+
+              let r = data[i];
+              let g = data[i + 1];
+              let b = data[i + 2];
+
+              r =
+                contrastFactor *
+                (r - 128) +
+                128 +
+                brightness * 2.2;
+
+              g =
+                contrastFactor *
+                (g - 128) +
+                128 +
+                brightness * 2.2;
+
+              b =
+                contrastFactor *
+                (b - 128) +
+                128 +
+                brightness * 2.2;
+
+
+              const max =
+                Math.max(r, g, b);
+
+              const min =
+                Math.min(r, g, b);
+
+              const avg =
+                (r + g + b) / 3;
+
+              const satFactor =
+                1 +
+                saturation / 100;
+
+              r =
+                avg +
+                (r - avg) *
+                satFactor;
+
+              g =
+                avg +
+                (g - avg) *
+                satFactor;
+
+              b =
+                avg +
+                (b - avg) *
+                satFactor;
+
+
+              r += warmth;
+              b -= warmth * .7;
+
+
+              data[i] =
+                clamp(r);
+
+              data[i + 1] =
+                clamp(g);
+
+              data[i + 2] =
+                clamp(b);
+            }
+
+
+            ctx.putImageData(
+              imageData,
+              0,
+              0
+            );
+
+
+            const sharp =
+              Number(
+                $("#sharp").value
+              );
+
+            if (sharp > 0) {
+
+              const original =
+                ctx.getImageData(
                   0,
                   0,
                   canvas.width,
                   canvas.height
                 );
 
+              const srcData =
+                original.data;
 
-                const blob =
-                  await canvasBlob(
-                    canvas,
-                    'image/jpeg',
-                    quality
-                  );
-
-
-                downloadBlob(
-                  blob,
-                  safeName(
-                    file,
-                    'compressed',
-                    'jpg'
-                  )
+              const copy =
+                new Uint8ClampedArray(
+                  srcData
                 );
 
+              const amount =
+                sharp / 100;
 
-                showToast(
-                  `Compressed: ${formatBytes(blob.size)}`
-                );
+              const w =
+                canvas.width;
 
-              } catch (error) {
+              const h =
+                canvas.height;
 
-                showToast(
-                  error.message,
-                  'error'
-                );
 
-              }
+              for (
+                let y = 1;
+                y < h - 1;
+                y++
+              ) {
 
-            };
-
-
-        } catch (error) {
-
-          showToast(
-            error.message,
-            'error'
-          );
-
-        }
-
-      }
-    );
-
-  },
-
-
-  /* RESIZE */
-
-  resize() {
-
-    dialogBody.innerHTML = `
-
-      ${imagePicker(`
-
-        <div class="control-grid">
-
-          <label>
-
-            Width
-
-            <input
-              id="w"
-              type="number"
-              min="1"
-              max="6000"
-            >
-
-          </label>
-
-          <label>
-
-            Height
-
-            <input
-              id="h"
-              type="number"
-              min="1"
-              max="6000"
-            >
-
-          </label>
-
-        </div>
-
-
-        <label class="check">
-
-          <input
-            id="lock"
-            type="checkbox"
-            checked
-          >
-
-          Keep aspect ratio
-
-        </label>
-
-
-        ${resultBox()}
-
-      `)}
-
-    `;
-
-
-    wirePicker(
-      async file => {
-
-        try {
-
-          const image =
-            await loadImage(file);
-
-          state.file = file;
-
-          state.image = image;
-
-
-          $('#w').value =
-            image.naturalWidth;
-
-          $('#h').value =
-            image.naturalHeight;
-
-
-          const ratio =
-            image.naturalWidth /
-            image.naturalHeight;
-
-
-          $('#w').oninput = () => {
-
-            if (
-              $('#lock').checked
-            ) {
-
-              $('#h').value =
-                Math.round(
-                  $('#w').value /
-                  ratio
-                );
-
-            }
-
-          };
-
-
-          $('#h').oninput = () => {
-
-            if (
-              $('#lock').checked
-            ) {
-
-              $('#w').value =
-                Math.round(
-                  $('#h').value *
-                  ratio
-                );
-
-            }
-
-          };
-
-
-          const result =
-            $('#resultBox');
-
-          renderPreview(
-            result,
-            image,
-            file
-          );
-
-
-          result.insertAdjacentHTML(
-            'beforeend',
-            `
-
-              <div class="tool-actions">
-
-                <button
-                  class="primary"
-                  id="run"
-                >
-                  Resize & Download
-                </button>
-
-              </div>
-
-            `
-          );
-
-
-          $('#run').onclick =
-            async () => {
-
-              try {
-
-                const width =
-                  Math.min(
-                    6000,
-                    Math.max(
-                      1,
-                      Number(
-                        $('#w').value
-                      ) ||
-                      image.naturalWidth
-                    )
-                  );
-
-
-                const height =
-                  Math.min(
-                    6000,
-                    Math.max(
-                      1,
-                      Number(
-                        $('#h').value
-                      ) ||
-                      image.naturalHeight
-                    )
-                  );
-
-
-                const canvas =
-                  document.createElement(
-                    'canvas'
-                  );
-
-                canvas.width =
-                  width;
-
-                canvas.height =
-                  height;
-
-
-                canvas
-                  .getContext('2d')
-                  .drawImage(
-                    image,
-                    0,
-                    0,
-                    width,
-                    height
-                  );
-
-
-                const blob =
-                  await canvasBlob(
-                    canvas,
-                    'image/png'
-                  );
-
-
-                downloadBlob(
-                  blob,
-                  safeName(
-                    file,
-                    'resized',
-                    'png'
-                  )
-                );
-
-
-                showToast(
-                  'Resized image downloaded.'
-                );
-
-              } catch (error) {
-
-                showToast(
-                  error.message,
-                  'error'
-                );
-
-              }
-
-            };
-
-
-        } catch (error) {
-
-          showToast(
-            error.message,
-            'error'
-          );
-
-        }
-
-      }
-    );
-
-  },
-
-
-  /* CROP */
-
-  crop() {
-
-    dialogBody.innerHTML = `
-
-      ${imagePicker(`
-
-        <div class="control-grid four">
-
-          <label>
-            X
-            <input
-              id="cx"
-              type="number"
-              min="0"
-              value="0"
-            >
-          </label>
-
-          <label>
-            Y
-            <input
-              id="cy"
-              type="number"
-              min="0"
-              value="0"
-            >
-          </label>
-
-          <label>
-            Width
-            <input
-              id="cw"
-              type="number"
-              min="1"
-              value="100"
-            >
-          </label>
-
-          <label>
-            Height
-            <input
-              id="ch"
-              type="number"
-              min="1"
-              value="100"
-            >
-          </label>
-
-        </div>
-
-        ${resultBox()}
-
-      `)}
-
-    `;
-
-
-    wirePicker(
-      async file => {
-
-        try {
-
-          const image =
-            await loadImage(file);
-
-          state.file = file;
-
-          state.image = image;
-
-
-          $('#cw').value =
-            image.naturalWidth;
-
-          $('#ch').value =
-            image.naturalHeight;
-
-
-          const result =
-            $('#resultBox');
-
-          renderPreview(
-            result,
-            image,
-            file
-          );
-
-
-          result.insertAdjacentHTML(
-            'beforeend',
-            `
-
-              <p class="hint">
-                Coordinates are measured from
-                the top-left corner of the original image.
-              </p>
-
-              <div class="tool-actions">
-
-                <button
-                  class="primary"
-                  id="run"
-                >
-                  Crop & Download
-                </button>
-
-              </div>
-
-            `
-          );
-
-
-          $('#run').onclick =
-            async () => {
-
-              try {
-
-                const x =
-                  Math.max(
-                    0,
-                    Math.min(
-                      image.naturalWidth - 1,
-                      Number(
-                        $('#cx').value
-                      ) || 0
-                    )
-                  );
-
-
-                const y =
-                  Math.max(
-                    0,
-                    Math.min(
-                      image.naturalHeight - 1,
-                      Number(
-                        $('#cy').value
-                      ) || 0
-                    )
-                  );
-
-
-                const width =
-                  Math.max(
-                    1,
-                    Math.min(
-                      image.naturalWidth - x,
-                      Number(
-                        $('#cw').value
-                      ) || 1
-                    )
-                  );
-
-
-                const height =
-                  Math.max(
-                    1,
-                    Math.min(
-                      image.naturalHeight - y,
-                      Number(
-                        $('#ch').value
-                      ) || 1
-                    )
-                  );
-
-
-                const canvas =
-                  document.createElement(
-                    'canvas'
-                  );
-
-
-                canvas.width =
-                  width;
-
-                canvas.height =
-                  height;
-
-
-                canvas
-                  .getContext('2d')
-                  .drawImage(
-                    image,
-                    x,
-                    y,
-                    width,
-                    height,
-                    0,
-                    0,
-                    width,
-                    height
-                  );
-
-
-                const blob =
-                  await canvasBlob(
-                    canvas,
-                    'image/png'
-                  );
-
-
-                downloadBlob(
-                  blob,
-                  safeName(
-                    file,
-                    'cropped',
-                    'png'
-                  )
-                );
-
-
-                showToast(
-                  'Cropped image downloaded.'
-                );
-
-              } catch (error) {
-
-                showToast(
-                  error.message,
-                  'error'
-                );
-
-              }
-
-            };
-
-
-        } catch (error) {
-
-          showToast(
-            error.message,
-            'error'
-          );
-
-        }
-
-      }
-    );
-
-  },
-
-
-  /* ROTATE / FLIP */
-
-  rotate() {
-
-    dialogBody.innerHTML = `
-
-      ${imagePicker(`
-
-        <div class="segmented">
-
-          <button
-            data-rotate="90"
-            type="button"
-          >
-            Rotate 90°
-          </button>
-
-          <button
-            data-rotate="180"
-            type="button"
-          >
-            Rotate 180°
-          </button>
-
-          <button
-            data-rotate="270"
-            type="button"
-          >
-            Rotate 270°
-          </button>
-
-          <button
-            data-flip="x"
-            type="button"
-          >
-            Flip horizontal
-          </button>
-
-          <button
-            data-flip="y"
-            type="button"
-          >
-            Flip vertical
-          </button>
-
-        </div>
-
-        ${resultBox()}
-
-      `)}
-
-    `;
-
-
-    wirePicker(
-      async file => {
-
-        try {
-
-          const image =
-            await loadImage(file);
-
-          state.file = file;
-
-          state.image = image;
-
-
-          const result =
-            $('#resultBox');
-
-          renderPreview(
-            result,
-            image,
-            file
-          );
-
-
-          let angle = 0;
-
-          let flipX = 1;
-
-          let flipY = 1;
-
-
-          $$('[data-rotate]')
-            .forEach(button => {
-
-              button.onclick = () => {
-
-                angle =
-                  Number(
-                    button.dataset.rotate
-                  );
-
-              };
-
-            });
-
-
-          $$('[data-flip]')
-            .forEach(button => {
-
-              button.onclick = () => {
-
-                if (
-                  button.dataset.flip === 'x'
+                for (
+                  let x = 1;
+                  x < w - 1;
+                  x++
                 ) {
 
-                  flipX *= -1;
+                  const p =
+                    (y * w + x) * 4;
 
-                } else {
+                  for (
+                    let c = 0;
+                    c < 3;
+                    c++
+                  ) {
 
-                  flipY *= -1;
+                    const center =
+                      copy[p + c];
 
+                    const top =
+                      copy[p - w * 4 + c];
+
+                    const bottom =
+                      copy[p + w * 4 + c];
+
+                    const left =
+                      copy[p - 4 + c];
+
+                    const right =
+                      copy[p + 4 + c];
+
+                    const edge =
+                      center * 5 -
+                      top -
+                      bottom -
+                      left -
+                      right;
+
+                    srcData[p + c] =
+                      clamp(
+                        center +
+                        (edge - center) *
+                        amount
+                      );
+                  }
                 }
-
-              };
-
-            });
-
-
-          result.insertAdjacentHTML(
-            'beforeend',
-            `
-
-              <div class="tool-actions">
-
-                <button
-                  class="primary"
-                  id="run"
-                >
-                  Apply & Download
-                </button>
-
-              </div>
-
-            `
-          );
-
-
-          $('#run').onclick =
-            async () => {
-
-              try {
-
-                const radians =
-                  angle *
-                  Math.PI /
-                  180;
-
-
-                const swap =
-                  angle === 90 ||
-                  angle === 270;
-
-
-                const canvas =
-                  document.createElement(
-                    'canvas'
-                  );
-
-
-                canvas.width =
-                  swap
-                    ? image.naturalHeight
-                    : image.naturalWidth;
-
-
-                canvas.height =
-                  swap
-                    ? image.naturalWidth
-                    : image.naturalHeight;
-
-
-                const context =
-                  canvas.getContext('2d');
-
-
-                context.translate(
-                  canvas.width / 2,
-                  canvas.height / 2
-                );
-
-
-                context.rotate(
-                  radians
-                );
-
-
-                context.scale(
-                  flipX,
-                  flipY
-                );
-
-
-                context.drawImage(
-                  image,
-                  -image.naturalWidth / 2,
-                  -image.naturalHeight / 2
-                );
-
-
-                const blob =
-                  await canvasBlob(
-                    canvas,
-                    'image/png'
-                  );
-
-
-                downloadBlob(
-                  blob,
-                  safeName(
-                    file,
-                    'edited',
-                    'png'
-                  )
-                );
-
-
-                showToast(
-                  'Edited image downloaded.'
-                );
-
-              } catch (error) {
-
-                showToast(
-                  error.message,
-                  'error'
-                );
-
               }
 
-            };
+              ctx.putImageData(
+                original,
+                0,
+                0
+              );
+            }
 
 
-        } catch (error) {
+            const blob =
+              await canvasBlob(
+                canvas,
+                "image/jpeg",
+                .94
+              );
 
-          showToast(
-            error.message,
-            'error'
-          );
+            downloadBlob(
+              blob,
+              "filefox-dslr-look.jpg"
+            );
 
-        }
+          } catch (error) {
 
-      }
-    );
-
-  },
-
-
-  /* PHOTO ENHANCER */
-
-  enhance() {
-
-    dialogBody.innerHTML = `
-
-      ${imagePicker(`
-
-        <div class="preset-row">
-
-          <button
-            data-preset="natural"
-            type="button"
-          >
-            Natural
-          </button>
-
-          <button
-            data-preset="vivid"
-            type="button"
-          >
-            Vivid
-          </button>
-
-          <button
-            data-preset="cinematic"
-            type="button"
-          >
-            Cinematic
-          </button>
-
-        </div>
-
-
-        <div class="control-grid">
-
-          <label>
-
-            Brightness
-
-            <output id="bo">
-              0
-            </output>
-
-            <input
-              id="b"
-              type="range"
-              min="-40"
-              max="40"
-              value="0"
-            >
-
-          </label>
-
-
-          <label>
-
-            Contrast
-
-            <output id="co">
-              0
-            </output>
-
-            <input
-              id="c"
-              type="range"
-              min="-40"
-              max="40"
-              value="0"
-            >
-
-          </label>
-
-
-          <label>
-
-            Saturation
-
-            <output id="so">
-              0
-            </output>
-
-            <input
-              id="s"
-              type="range"
-              min="-40"
-              max="60"
-              value="0"
-            >
-
-          </label>
-
-
-          <label>
-
-            Warmth
-
-            <output id="wo">
-              0
-            </output>
-
-            <input
-              id="w"
-              type="range"
-              min="-30"
-              max="30"
-              value="0"
-            >
-
-          </label>
-
-
-          <label>
-
-            Sharpness
-
-            <output id="sho">
-              0
-            </output>
-
-            <input
-              id="sh"
-              type="range"
-              min="0"
-              max="2"
-              step="0.1"
-              value="0"
-            >
-
-          </label>
-
-        </div>
-
-
-        ${resultBox()}
-
-      `)}
-
-    `;
-
-
-    const sync =
-      () => {
-
-        [
-          'b',
-          'c',
-          's',
-          'w',
-          'sh'
-        ].forEach(id => {
-
-          const output =
-            $(`#${id}o`);
-
-          if (output) {
-
-            output.textContent =
-              $(`#${id}`).value;
-
+            showError(
+              error.message
+            );
           }
+        };
 
-        });
+    } catch (error) {
 
+      showError(
+        error.message
+      );
+    }
+  };
+}
+
+
+/* =========================================================
+   BACKGROUND CLEANER
+========================================================= */
+
+function backgroundTool() {
+
+  openModal(
+    imagePickerUI(
+      "Background Cleaner",
+      "Best for photos with a simple, fairly uniform background."
+    )
+  );
+
+  $("#chooseFile").onclick = async () => {
+
+    try {
+
+      const file =
+        await filePicker("image/*");
+
+      const src =
+        await readDataURL(file);
+
+      const img =
+        await loadImage(src);
+
+      $("#workArea").innerHTML = `
+
+        <img class="preview" id="bgPreview">
+
+        <div class="tool-controls">
+
+          <div class="control">
+            <label>
+              Background tolerance
+              <strong id="tolVal">55</strong>
+            </label>
+
+            <input
+              id="tolerance"
+              type="range"
+              min="10"
+              max="130"
+              value="55">
+          </div>
+
+          <button
+            class="primary-btn"
+            id="removeBgBtn">
+            Remove background
+          </button>
+
+        </div>
+
+        <p class="status">
+          This is a browser-based color remover,
+          not AI subject segmentation.
+        </p>
+      `;
+
+      $("#bgPreview").src =
+        src;
+
+      $("#tolerance").oninput = () => {
+
+        $("#tolVal").textContent =
+          $("#tolerance").value;
       };
 
 
-    sync();
+      $("#removeBgBtn").onclick =
+        async () => {
+
+          try {
+
+            const size =
+              safeDimension(
+                img.naturalWidth,
+                img.naturalHeight,
+                1800
+              );
+
+            const canvas =
+              makeCanvas(
+                size.width,
+                size.height
+              );
+
+            const ctx =
+              canvas.getContext("2d", {
+                willReadFrequently: true
+              });
+
+            ctx.drawImage(
+              img,
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+
+            const imageData =
+              ctx.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+              );
+
+            const data =
+              imageData.data;
+
+            const w =
+              canvas.width;
+
+            const h =
+              canvas.height;
 
 
-    [
-      'b',
-      'c',
-      's',
-      'w',
-      'sh'
-    ].forEach(id => {
+            function pixel(x, y) {
 
-      $(`#${id}`).oninput =
-        sync;
+              const i =
+                (y * w + x) * 4;
 
-    });
-
-
-    const presets = {
-
-      natural: [
-        4,
-        8,
-        5,
-        2,
-        0.5
-      ],
-
-      vivid: [
-        3,
-        15,
-        25,
-        3,
-        1
-      ],
-
-      cinematic: [
-        -2,
-        18,
-        -5,
-        -4,
-        1.2
-      ]
-
-    };
+              return [
+                data[i],
+                data[i + 1],
+                data[i + 2]
+              ];
+            }
 
 
-    $$('[data-preset]')
-      .forEach(button => {
-
-        button.onclick = () => {
-
-          const values =
-            presets[
-              button.dataset.preset
+            const points = [
+              pixel(0, 0),
+              pixel(w - 1, 0),
+              pixel(0, h - 1),
+              pixel(w - 1, h - 1)
             ];
 
 
-          [
-            'b',
-            'c',
-            's',
-            'w',
-            'sh'
-          ].forEach(
-            (id, index) => {
-
-              $(`#${id}`).value =
-                values[index];
-
-            }
-          );
-
-
-          sync();
-
-        };
-
-      });
-
-
-    wirePicker(
-      async file => {
-
-        try {
-
-          const image =
-            await loadImage(file);
-
-          state.file = file;
-
-          state.image = image;
-
-
-          const result =
-            $('#resultBox');
-
-          renderPreview(
-            result,
-            image,
-            file
-          );
-
-
-          result.insertAdjacentHTML(
-            'beforeend',
-            `
-
-              <p class="hint">
-                Pixel processing is used here,
-                so the enhancer does not depend on
-                CSS filter support.
-              </p>
-
-              <div class="tool-actions">
-
-                <button
-                  class="primary"
-                  id="run"
-                >
-                  Enhance & Download
-                </button>
-
-              </div>
-
-            `
-          );
-
-
-          $('#run').onclick =
-            async () => {
-
-              try {
-
-                const maximum =
-                  2200;
-
-
-                const scale =
-                  Math.min(
-                    1,
-                    maximum /
-                    Math.max(
-                      image.naturalWidth,
-                      image.naturalHeight
-                    )
-                  );
-
-
-                const width =
-                  Math.max(
-                    1,
-                    Math.round(
-                      image.naturalWidth *
-                      scale
-                    )
-                  );
-
-
-                const height =
-                  Math.max(
-                    1,
-                    Math.round(
-                      image.naturalHeight *
-                      scale
-                    )
-                  );
-
-
-                const canvas =
-                  document.createElement(
-                    'canvas'
-                  );
-
-
-                canvas.width =
-                  width;
-
-                canvas.height =
-                  height;
-
-
-                const context =
-                  canvas.getContext('2d');
-
-
-                context.drawImage(
-                  image,
-                  0,
-                  0,
-                  width,
-                  height
-                );
-
-
-                const imageData =
-                  context.getImageData(
-                    0,
-                    0,
-                    width,
-                    height
-                  );
-
-
-                const pixels =
-                  imageData.data;
-
-
-                const brightness =
-                  Number(
-                    $('#b').value
-                  ) * 2.55;
-
-
-                const contrast =
-                  Number(
-                    $('#c').value
-                  );
-
-
-                const saturation =
-                  1 +
-                  Number(
-                    $('#s').value
-                  ) / 100;
-
-
-                const warmth =
-                  Number(
-                    $('#w').value
-                  ) * 1.4;
-
-
-                const sharpness =
-                  Number(
-                    $('#sh').value
-                  );
-
-
-                const factor =
-                  (
-                    259 *
-                    (contrast + 255)
-                  ) /
-                  (
-                    255 *
-                    (259 - contrast)
-                  );
-
-
-                for (
-                  let index = 0;
-                  index < pixels.length;
-                  index += 4
-                ) {
-
-                  let red =
-                    pixels[index];
-
-
-                  let green =
-                    pixels[index + 1];
-
-
-                  let blue =
-                    pixels[index + 2];
-
-
-                  red =
-                    factor *
-                    (red - 128) +
-                    128 +
-                    brightness +
-                    warmth;
-
-
-                  green =
-                    factor *
-                    (green - 128) +
-                    128 +
-                    brightness;
-
-
-                  blue =
-                    factor *
-                    (blue - 128) +
-                    128 +
-                    brightness -
-                    warmth;
-
-
-                  const gray =
-                    0.299 * red +
-                    0.587 * green +
-                    0.114 * blue;
-
-
-                  red =
-                    gray +
-                    (red - gray) *
-                    saturation;
-
-
-                  green =
-                    gray +
-                    (green - gray) *
-                    saturation;
-
-
-                  blue =
-                    gray +
-                    (blue - gray) *
-                    saturation;
-
-
-                  pixels[index] =
-                    Math.max(
-                      0,
-                      Math.min(
-                        255,
-                        red
-                      )
-                    );
-
-
-                  pixels[index + 1] =
-                    Math.max(
-                      0,
-                      Math.min(
-                        255,
-                        green
-                      )
-                    );
-
-
-                  pixels[index + 2] =
-                    Math.max(
-                      0,
-                      Math.min(
-                        255,
-                        blue
-                      )
-                    );
-
-                }
-
-
-                context.putImageData(
-                  imageData,
-                  0,
+            const bg = [
+              Math.round(
+                points.reduce(
+                  (s, p) => s + p[0],
                   0
-                );
-
-
-                /*
-                  Optional sharpening.
-                */
-
-                if (
-                  sharpness > 0 &&
-                  width > 2 &&
-                  height > 2
-                ) {
-
-                  const source =
-                    context.getImageData(
-                      0,
-                      0,
-                      width,
-                      height
-                    );
-
-
-                  const sourcePixels =
-                    source.data;
-
-
-                  const output =
-                    context.createImageData(
-                      width,
-                      height
-                    );
-
-
-                  const outputPixels =
-                    output.data;
-
-
-                  const amount =
-                    sharpness;
-
-
-                  for (
-                    let y = 1;
-                    y < height - 1;
-                    y++
-                  ) {
-
-                    for (
-                      let x = 1;
-                      x < width - 1;
-                      x++
-                    ) {
-
-                      const index =
-                        (
-                          y *
-                          width +
-                          x
-                        ) * 4;
-
-
-                      for (
-                        let channel = 0;
-                        channel < 3;
-                        channel++
-                      ) {
-
-                        const value =
-                          sourcePixels[
-                            index +
-                            channel
-                          ] *
-                          (
-                            1 +
-                            4 * amount
-                          )
-                          -
-                          amount *
-                          (
-                            sourcePixels[
-                              index -
-                              4 +
-                              channel
-                            ]
-                            +
-                            sourcePixels[
-                              index +
-                              4 +
-                              channel
-                            ]
-                            +
-                            sourcePixels[
-                              index -
-                              width * 4 +
-                              channel
-                            ]
-                            +
-                            sourcePixels[
-                              index +
-                              width * 4 +
-                              channel
-                            ]
-                          );
-
-
-                        outputPixels[
-                          index +
-                          channel
-                        ] =
-                          Math.max(
-                            0,
-                            Math.min(
-                              255,
-                              value
-                            )
-                          );
-
-                      }
-
-
-                      outputPixels[
-                        index + 3
-                      ] =
-                        sourcePixels[
-                          index + 3
-                        ];
-
-                    }
-
-                  }
-
-
-                  context.putImageData(
-                    output,
-                    0,
-                    0
-                  );
-
-                }
-
-
-                const blob =
-                  await canvasBlob(
-                    canvas,
-                    'image/jpeg',
-                    0.94
-                  );
-
-
-                downloadBlob(
-                  blob,
-                  safeName(
-                    file,
-                    'enhanced',
-                    'jpg'
-                  )
-                );
-
-
-                showToast(
-                  'Enhanced photo downloaded.'
-                );
-
-              } catch (error) {
-
-                showToast(
-                  error.message,
-                  'error'
-                );
-
-              }
-
-            };
-
-
-        } catch (error) {
-
-          showToast(
-            error.message,
-            'error'
-          );
-
-        }
-
-      }
-    );
-
-  },
-
-
-  /* BACKGROUND CLEANER */
-
-  background() {
-
-    dialogBody.innerHTML = `
-
-      ${imagePicker(`
-
-        <div class="control-grid one">
-
-          <label>
-
-            Removal strength
-
-            <output id="tolOut">
-              55
-            </output>
-
-            <input
-              id="tol"
-              type="range"
-              min="15"
-              max="120"
-              value="55"
-            >
-
-          </label>
-
-        </div>
-
-
-        <p class="hint">
-
-          Best for photos with a fairly uniform
-          light or solid background.
-
-          This is a local color-based remover,
-          not full AI segmentation.
-
-        </p>
-
-
-        ${resultBox()}
-
-      `)}
-
-    `;
-
-
-    $('#tol').oninput = () => {
-
-      $('#tolOut').textContent =
-        $('#tol').value;
-
-    };
-
-
-    wirePicker(
-      async file => {
-
-        try {
-
-          const image =
-            await loadImage(file);
-
-          state.file = file;
-
-          state.image = image;
-
-
-          const result =
-            $('#resultBox');
-
-          renderPreview(
-            result,
-            image,
-            file
-          );
-
-
-          result.insertAdjacentHTML(
-            'beforeend',
-            `
-
-              <div class="tool-actions">
-
-                <button
-                  class="primary"
-                  id="run"
-                >
-                  Remove Background & Download PNG
-                </button>
-
-              </div>
-
-            `
-          );
-
-
-          $('#run').onclick =
-            async () => {
-
-              try {
-
-                const maximum =
-                  1800;
-
-
-                const scale =
-                  Math.min(
-                    1,
-                    maximum /
-                    Math.max(
-                      image.naturalWidth,
-                      image.naturalHeight
-                    )
-                  );
-
-
-                const width =
-                  Math.round(
-                    image.naturalWidth *
-                    scale
-                  );
-
-
-                const height =
-                  Math.round(
-                    image.naturalHeight *
-                    scale
-                  );
-
-
-                const canvas =
-                  document.createElement(
-                    'canvas'
-                  );
-
-
-                canvas.width =
-                  width;
-
-                canvas.height =
-                  height;
-
-
-                const context =
-                  canvas.getContext('2d');
-
-
-                context.drawImage(
-                  image,
-                  0,
-                  0,
-                  width,
-                  height
-                );
-
-
-                const data =
-                  context.getImageData(
-                    0,
-                    0,
-                    width,
-                    height
-                  );
-
-
-                const pixels =
-                  data.data;
-
-
-                const corners = [
-
-                  0,
-
-                  width - 1,
-
-                  (height - 1) *
-                  width,
-
-                  (height - 1) *
-                  width +
-                  width - 1
-
-                ];
-
-
-                let backgroundRed = 0;
-
-                let backgroundGreen = 0;
-
-                let backgroundBlue = 0;
-
-
-                corners.forEach(
-                  position => {
-
-                    backgroundRed +=
-                      pixels[
-                        position * 4
-                      ];
-
-                    backgroundGreen +=
-                      pixels[
-                        position * 4 + 1
-                      ];
-
-                    backgroundBlue +=
-                      pixels[
-                        position * 4 + 2
-                      ];
-
-                  }
-                );
-
-
-                backgroundRed /= 4;
-
-                backgroundGreen /= 4;
-
-                backgroundBlue /= 4;
-
-
-                const tolerance =
-                  Number(
-                    $('#tol').value
-                  );
-
-
-                for (
-                  let index = 0;
-                  index < pixels.length;
-                  index += 4
-                ) {
-
-                  const distance =
-                    Math.hypot(
-                      pixels[index] -
-                      backgroundRed,
-
-                      pixels[index + 1] -
-                      backgroundGreen,
-
-                      pixels[index + 2] -
-                      backgroundBlue
-                    );
-
-
-                  if (
-                    distance <
-                    tolerance
-                  ) {
-
-                    pixels[index + 3] =
-                      Math.max(
-                        0,
-                        Math.round(
-                          255 *
-                          (
-                            distance /
-                            tolerance
-                          )
-                        )
-                      );
-
-                  }
-
-                }
-
-
-                context.putImageData(
-                  data,
-                  0,
+                ) / points.length
+              ),
+
+              Math.round(
+                points.reduce(
+                  (s, p) => s + p[1],
                   0
-                );
+                ) / points.length
+              ),
+
+              Math.round(
+                points.reduce(
+                  (s, p) => s + p[2],
+                  0
+                ) / points.length
+              )
+            ];
 
 
-                const blob =
-                  await canvasBlob(
-                    canvas,
-                    'image/png'
-                  );
-
-
-                downloadBlob(
-                  blob,
-                  safeName(
-                    file,
-                    'background-removed',
-                    'png'
-                  )
-                );
-
-
-                showToast(
-                  'Transparent PNG downloaded.'
-                );
-
-              } catch (error) {
-
-                showToast(
-                  error.message,
-                  'error'
-                );
-
-              }
-
-            };
-
-
-        } catch (error) {
-
-          showToast(
-            error.message,
-            'error'
-          );
-
-        }
-
-      }
-    );
-
-  },
-
-
-  /* IMAGE TO PDF */
-
-  pdf() {
-
-    dialogBody.innerHTML = `
-
-      ${imagePicker(
-        resultBox()
-      )}
-
-    `;
-
-
-    wirePicker(
-      async file => {
-
-        try {
-
-          const image =
-            await loadImage(file);
-
-          state.file = file;
-
-          state.image = image;
-
-
-          const result =
-            $('#resultBox');
-
-
-          renderPreview(
-            result,
-            image,
-            file
-          );
-
-
-          result.insertAdjacentHTML(
-            'beforeend',
-            `
-
-              <p class="hint">
-
-                Chrome will open its print dialog.
-                Choose “Save as PDF”.
-
-              </p>
-
-
-              <div class="tool-actions">
-
-                <button
-                  class="primary"
-                  id="run"
-                >
-                  Open Print / Save as PDF
-                </button>
-
-              </div>
-
-            `
-          );
-
-
-          $('#run').onclick = () => {
-
-            const popup =
-              window.open(
-                '',
-                '_blank',
-                'noopener,noreferrer'
+            const tolerance =
+              Number(
+                $("#tolerance").value
               );
 
 
-            if (!popup) {
+            for (
+              let i = 0;
+              i < data.length;
+              i += 4
+            ) {
 
-              showToast(
-                'Chrome blocked the popup. Allow popups for FileFox and try again.',
-                'error'
+              const dr =
+                data[i] - bg[0];
+
+              const dg =
+                data[i + 1] - bg[1];
+
+              const db =
+                data[i + 2] - bg[2];
+
+              const distance =
+                Math.sqrt(
+                  dr * dr +
+                  dg * dg +
+                  db * db
+                );
+
+
+              if (
+                distance <= tolerance
+              ) {
+
+                data[i + 3] = 0;
+
+              } else if (
+                distance <
+                tolerance + 30
+              ) {
+
+                const alpha =
+                  Math.round(
+                    ((distance - tolerance) /
+                    30) *
+                    255
+                  );
+
+                data[i + 3] =
+                  alpha;
+              }
+            }
+
+
+            ctx.putImageData(
+              imageData,
+              0,
+              0
+            );
+
+
+            const blob =
+              await canvasBlob(
+                canvas,
+                "image/png"
+              );
+
+            downloadBlob(
+              blob,
+              "filefox-background-cleaned.png"
+            );
+
+          } catch (error) {
+
+            showError(
+              error.message
+            );
+          }
+        };
+
+    } catch (error) {
+
+      showError(
+        error.message
+      );
+    }
+  };
+}
+
+
+/* =========================================================
+   IMAGE → PDF
+========================================================= */
+
+function pdfTool() {
+
+  openModal(`
+    <h2 class="modal-title">
+      Image → PDF
+    </h2>
+
+    <p class="modal-subtitle">
+      Select an image, then print/save it as PDF.
+    </p>
+
+    <div class="drop-zone">
+
+      <button
+        class="choose-btn"
+        id="pdfChoose">
+        Choose image
+      </button>
+
+      <p class="status">
+        Chrome's print dialog will create the PDF.
+      </p>
+
+    </div>
+
+    <div id="pdfArea"></div>
+  `);
+
+
+  $("#pdfChoose").onclick =
+    async () => {
+
+      try {
+
+        const file =
+          await filePicker("image/*");
+
+        const src =
+          await readDataURL(file);
+
+        const img =
+          await loadImage(src);
+
+        $("#pdfArea").innerHTML = `
+
+          <img
+            class="preview"
+            id="pdfPreview">
+
+          <div class="result-actions">
+
+            <button
+              class="primary-btn"
+              id="printPdfBtn">
+              Open Print / Save PDF
+            </button>
+
+          </div>
+        `;
+
+        $("#pdfPreview").src =
+          src;
+
+
+        $("#printPdfBtn").onclick =
+          () => {
+
+            const win =
+              window.open(
+                "",
+                "_blank"
+              );
+
+            if (!win) {
+
+              showError(
+                "Chrome blocked the new window. Allow pop-ups for FileFox and try again."
               );
 
               return;
-
             }
 
 
-            const imageURL =
-              URL.createObjectURL(file);
-
-
-            popup.document.write(`
-
-              <!doctype html>
-
+            win.document.write(`
+              <!DOCTYPE html>
               <html>
+              <head>
+                <title>FileFox PDF</title>
 
-                <head>
+                <style>
+                  html,body{
+                    margin:0;
+                    padding:0;
+                    background:white;
+                  }
 
-                  <title>
-                    FileFox PDF
-                  </title>
+                  body{
+                    display:flex;
+                    justify-content:center;
+                    align-items:center;
+                    min-height:100vh;
+                  }
 
-                  <style>
+                  img{
+                    max-width:100%;
+                    max-height:100vh;
+                  }
+                </style>
+              </head>
 
-                    html,
-                    body {
-                      margin: 0;
-                    }
+              <body>
 
-                    body {
-                      display: grid;
-                      place-items: center;
-                      min-height: 100vh;
-                    }
+                <img
+                  src="${src}"
+                  onload="setTimeout(() => window.print(), 300)">
 
-                    img {
-                      max-width: 100%;
-                      max-height: 100vh;
-                    }
-
-                  </style>
-
-                </head>
-
-                <body>
-
-                  <img
-                    src="${imageURL}"
-                    alt="PDF image"
-                  >
-
-                </body>
-
+              </body>
               </html>
-
             `);
 
-
-            popup.document.close();
-
-
-            setTimeout(() => {
-
-              popup.focus();
-
-              popup.print();
-
-            }, 500);
-
+            win.document.close();
           };
 
+      } catch (error) {
 
-        } catch (error) {
-
-          showToast(
-            error.message,
-            'error'
-          );
-
-        }
-
+        showError(
+          error.message
+        );
       }
-    );
-
-  },
-
-
-  /* QR */
-
-  qr() {
-
-    dialogBody.innerHTML = `
-
-      <label>
-
-        Text or link
-
-        <textarea
-          id="qrText"
-          rows="5"
-          placeholder="https://example.com"
-        ></textarea>
-
-      </label>
+    };
+}
 
 
-      <label>
+/* =========================================================
+   QR
+========================================================= */
 
-        Size
+function qrTool() {
 
-        <select id="qrSize">
+  openModal(`
+    <h2 class="modal-title">
+      QR Code Generator
+    </h2>
 
-          <option value="220">
-            220 px
-          </option>
+    <p class="modal-subtitle">
+      Create a QR code from text or a link.
+    </p>
 
-          <option value="320">
-            320 px
-          </option>
+    <div class="control">
+      <label>Text / URL</label>
 
-          <option value="480">
-            480 px
-          </option>
+      <input
+        id="qrText"
+        placeholder="https://example.com">
+    </div>
 
-        </select>
+    <div class="result-actions">
 
-      </label>
+      <button
+        class="primary-btn"
+        id="makeQR">
+        Generate QR
+      </button>
 
+    </div>
 
-      <div
-        id="qrBox"
-        class="qr-box"
-      ></div>
-
-
-      <div class="tool-actions">
-
-        <button
-          class="primary"
-          id="makeQR"
-          type="button"
-        >
-          Generate QR
-        </button>
-
-        <button
-          id="downloadQR"
-          type="button"
-        >
-          Download PNG
-        </button>
-
-      </div>
-
-    `;
+    <div
+      class="qr-box"
+      id="qrBox">
+    </div>
+  `);
 
 
-    $('#makeQR').onclick = () => {
-
-      const box =
-        $('#qrBox');
-
-
-      box.innerHTML = '';
-
+  $("#makeQR").onclick =
+    () => {
 
       const text =
-        $('#qrText')
-          .value
-          .trim();
-
+        $("#qrText").value.trim();
 
       if (!text) {
 
-        showToast(
-          'Enter text or a link first.',
-          'error'
+        showError(
+          "Enter some text or a URL."
         );
 
         return;
-
       }
 
 
       if (
-        typeof QRCode === 'undefined'
+        typeof QRCode ===
+        "undefined"
       ) {
 
-        showToast(
-          'QR library did not load. Check your internet connection.',
-          'error'
+        showError(
+          "QR library could not load. Check your internet connection and refresh."
         );
 
         return;
-
       }
+
+
+      const box =
+        $("#qrBox");
+
+      box.innerHTML = "";
 
 
       new QRCode(
         box,
         {
           text,
-
-          width:
-            Number(
-              $('#qrSize').value
-            ),
-
-          height:
-            Number(
-              $('#qrSize').value
-            ),
-
-          correctLevel:
-            QRCode.CorrectLevel.M
+          width: 190,
+          height: 190
         }
       );
-
     };
-
-
-    $('#downloadQR').onclick = () => {
-
-      const image =
-        $('#qrBox img');
-
-
-      if (!image) {
-
-        showToast(
-          'Generate the QR code first.',
-          'error'
-        );
-
-        return;
-
-      }
-
-
-      fetch(image.src)
-
-        .then(
-          response =>
-            response.blob()
-        )
-
-        .then(blob => {
-
-          downloadBlob(
-            blob,
-            'filefox-qr.png'
-          );
-
-        })
-
-        .catch(() => {
-
-          showToast(
-            'Could not download QR.',
-            'error'
-          );
-
-        });
-
-    };
-
-  },
-
-
-  /* TEXT */
-
-  text() {
-
-    dialogBody.innerHTML = `
-
-      <label>
-
-        Text
-
-        <textarea
-          id="textInput"
-          rows="9"
-          placeholder="Paste or type text..."
-        ></textarea>
-
-      </label>
-
-
-      <div class="text-actions">
-
-        <button
-          data-text-action="count"
-          type="button"
-        >
-          Count
-        </button>
-
-        <button
-          data-text-action="upper"
-          type="button"
-        >
-          UPPERCASE
-        </button>
-
-        <button
-          data-text-action="lower"
-          type="button"
-        >
-          lowercase
-        </button>
-
-        <button
-          data-text-action="title"
-          type="button"
-        >
-          Title Case
-        </button>
-
-        <button
-          data-text-action="clean"
-          type="button"
-        >
-          Clean Spaces
-        </button>
-
-      </div>
-
-
-      ${resultBox()}
-
-    `;
-
-
-    const output =
-      $('#resultBox');
-
-
-    $$('[data-text-action]')
-      .forEach(button => {
-
-        button.onclick = () => {
-
-          const text =
-            $('#textInput').value;
-
-
-          switch (
-            button.dataset.textAction
-          ) {
-
-            case 'count':
-
-              output.innerHTML = `
-
-                <div class="stats">
-
-                  <span>
-                    Words
-                    <b>
-                      ${
-                        (
-                          text
-                            .trim()
-                            .match(/\S+/g)
-                          ||
-                          []
-                        ).length
-                      }
-                    </b>
-                  </span>
-
-                  <span>
-                    Characters
-                    <b>
-                      ${text.length}
-                    </b>
-                  </span>
-
-                  <span>
-                    Lines
-                    <b>
-                      ${
-                        text
-                          ? text.split(
-                              /\r?\n/
-                            ).length
-                          : 0
-                      }
-                    </b>
-                  </span>
-
-                </div>
-
-              `;
-
-              break;
-
-
-            case 'upper':
-
-              $('#textInput').value =
-                text.toUpperCase();
-
-              break;
-
-
-            case 'lower':
-
-              $('#textInput').value =
-                text.toLowerCase();
-
-              break;
-
-
-            case 'title':
-
-              $('#textInput').value =
-                text
-                  .toLowerCase()
-                  .replace(
-                    /\b\w/g,
-                    character =>
-                      character.toUpperCase()
-                  );
-
-              break;
-
-
-            case 'clean':
-
-              $('#textInput').value =
-                text
-                  .replace(
-                    /[ \t]+/g,
-                    ' '
-                  )
-                  .replace(
-                    /\n{3,}/g,
-                    '\n\n'
-                  )
-                  .trim();
-
-              break;
-
-          }
-
-        };
-
-      });
-
-  },
-
-
-  /* PASSWORD */
-
-  password() {
-
-    dialogBody.innerHTML = `
-
-      <div class="control-grid">
-
-        <label>
-
-          Length
-
-          <output id="plOut">
-            16
-          </output>
-
-          <input
-            id="pl"
-            type="range"
-            min="8"
-            max="64"
-            value="16"
-          >
-
-        </label>
-
-
-        <label class="check">
-
-          <input
-            id="pc"
-            type="checkbox"
-            checked
-          >
-
-          Include numbers
-
-        </label>
-
-
-        <label class="check">
-
-          <input
-            id="ps"
-            type="checkbox"
-            checked
-          >
-
-          Include symbols
-
-        </label>
-
-      </div>
-
-
-      <div class="password-output">
-
-        <input
-          id="pass"
-          readonly
-        >
-
-        <button
-          id="copyPass"
-          type="button"
-        >
-          Copy
-        </button>
-
-      </div>
-
-
-      <div class="tool-actions">
-
-        <button
-          class="primary"
-          id="genPass"
-          type="button"
-        >
-          Generate
-        </button>
-
-      </div>
-
-    `;
-
-
-    $('#pl').oninput = () => {
-
-      $('#plOut').textContent =
-        $('#pl').value;
-
-    };
-
-
-    const generate =
-      () => {
-
-        let characters =
-          'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-
-
-        if (
-          $('#pc').checked
-        ) {
-
-          characters +=
-            '23456789';
-
-        }
-
-
-        if (
-          $('#ps').checked
-        ) {
-
-          characters +=
-            '!@#$%^&*_-+=';
-
-        }
-
-
-        const values =
-          new Uint32Array(
-            Number(
-              $('#pl').value
-            )
-          );
-
-
-        crypto.getRandomValues(
-          values
-        );
-
-
-        let password = '';
-
-
-        values.forEach(
-          value => {
-
-            password +=
-              characters[
-                value %
-                characters.length
-              ];
-
-          }
-        );
-
-
-        $('#pass').value =
-          password;
-
-      };
-
-
-    generate();
-
-
-    $('#genPass').onclick =
-      generate;
-
-
-    $('#copyPass').onclick = () => {
-
-      navigator.clipboard
-        ?.writeText(
-          $('#pass').value
-        )
-        .then(() => {
-
-          showToast(
-            'Copied.'
-          );
-
-        })
-        .catch(() => {
-
-          showToast(
-            'Copy failed.',
-            'error'
-          );
-
-        });
-
-    };
-
-  },
-
-
-  /* CALCULATOR */
-
-  calculator() {
-
-    dialogBody.innerHTML = `
-
-      <label>
-
-        Expression
-
-        <input
-          id="expr"
-          inputmode="decimal"
-          placeholder="(12 + 8) × 3 / 2"
-        >
-
-      </label>
-
-
-      <div class="tool-actions">
-
-        <button
-          class="primary"
-          id="calc"
-          type="button"
-        >
-          Calculate
-        </button>
-
-      </div>
-
-
-      ${resultBox()}
-
-    `;
-
-
-    $('#calc').onclick = () => {
-
-      const raw =
-        $('#expr')
-          .value
-          .replace(
-            /×/g,
-            '*'
-          )
-          .replace(
-            /÷/g,
-            '/'
-          )
-          .trim();
-
-
-      if (
-        !/^[0-9+\-*/().%\s]+$/.test(
-          raw
-        )
-      ) {
-
-        showToast(
-          'Only basic math characters are allowed.',
-          'error'
-        );
-
-        return;
-
-      }
-
-
-      try {
-
-        const value =
-          Function(
-            `"use strict";return (${raw})`
-          )();
-
-
-        if (
-          !Number.isFinite(value)
-        ) {
-
-          throw new Error();
-
-        }
-
-
-        $('#resultBox').innerHTML = `
-
-          <div class="big-result">
-
-            ${escapeHTML(
-              String(value)
-            )}
-
-          </div>
-
-        `;
-
-      } catch {
-
-        showToast(
-          'Invalid expression.',
-          'error'
-        );
-
-      }
-
-    };
-
-  },
-
-
-  /* JSON */
-
-  json() {
-
-    simpleTextTool(
-      'Paste JSON here...',
-      value => {
-
-        try {
-
-          return JSON.stringify(
-            JSON.parse(value),
-            null,
-            2
-          );
-
-        } catch {
-
-          return null;
-
-        }
-
-      },
-      'Format JSON'
-    );
-
-  },
-
-
-  /* URL */
-
-  url() {
-
-    simpleTextTool(
-      'Paste URL text...',
-      value => {
-
-        try {
-
-          return encodeURIComponent(
-            value
-          );
-
-        } catch {
-
-          return null;
-
-        }
-
-      },
-      'Encode URL',
-      value => {
-
-        try {
-
-          return decodeURIComponent(
-            value
-          );
-
-        } catch {
-
-          return null;
-
-        }
-
-      },
-      'Decode URL'
-    );
-
-  },
-
-
-  /* HTML */
-
-  html() {
-
-    simpleTextTool(
-      'Paste HTML/text...',
-      value => {
-
-        return value.replace(
-          /[&<>\"']/g,
-          character => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-          }[character])
-        );
-
-      },
-      'Encode HTML',
-      value => {
-
-        const textarea =
-          document.createElement(
-            'textarea'
-          );
-
-        textarea.innerHTML =
-          value;
-
-        return textarea.value;
-
-      },
-      'Decode HTML'
-    );
-
-  },
-
-
-  /* SLUG */
-
-  slug() {
-
-    simpleTextTool(
-      'A title for your URL...',
-      value => {
-
-        return value
-          .toLowerCase()
-          .normalize('NFKD')
-          .replace(
-            /[\u0300-\u036f]/g,
-            ''
-          )
-          .replace(
-            /[^a-z0-9]+/g,
-            '-'
-          )
-          .replace(
-            /^-+|-+$/g,
-            ''
-          );
-
-      },
-      'Create Slug'
-    );
-
-  },
-
-
-  /* DUPLICATES */
-
-  duplicate() {
-
-    simpleTextTool(
-      'Paste lines...',
-      value => {
-
-        return [
-          ...new Set(
-            value.split(
-              /\r?\n/
-            )
-          )
-        ].join('\n');
-
-      },
-      'Remove Duplicates'
-    );
-
-  },
-
-
-  /* REVERSE */
-
-  reverse() {
-
-    simpleTextTool(
-      'Paste text...',
-      value =>
-        value
-          .split('')
-          .reverse()
-          .join(''),
-      'Reverse Text',
-      value =>
-        value
-          .split(/\r?\n/)
-          .reverse()
-          .join('\n'),
-      'Reverse Lines'
-    );
-
-  },
-
-
-  /* LINE COUNTER */
-
-  lines() {
-
-    simpleTextTool(
-      'Paste text...',
-      value => {
-
-        const lines =
-          value
-            ? value.split(
-                /\r?\n/
-              )
-            : [];
-
-
-        return `Lines: ${lines.length}
-Non-empty lines: ${
-          lines.filter(
-            line =>
-              line.trim()
-          ).length
-        }
-Characters: ${value.length}
-Words: ${
-          (
-            value
-              .trim()
-              .match(/\S+/g)
-            ||
-            []
-          ).length
-        }`;
-
-      },
-      'Count Lines'
-    );
-
-  },
-
-
-  /* BASE64 */
-
-  base64() {
-
-    dialogBody.innerHTML = `
-
-      <label>
-
-        Text
-
-        <textarea
-          id="baseInput"
-          rows="8"
-          placeholder="Text..."
-        ></textarea>
-
-      </label>
-
-
-      <div class="text-actions">
-
-        <button
-          id="b64e"
-          type="button"
-        >
-          Encode
-        </button>
-
-        <button
-          id="b64d"
-          type="button"
-        >
-          Decode
-        </button>
-
-      </div>
-
-
-      ${resultBox()}
-
-    `;
-
-
-    $('#b64e').onclick = () => {
-
-      try {
-
-        const encoded =
-          btoa(
-            unescape(
-              encodeURIComponent(
-                $('#baseInput').value
-              )
-            )
-          );
-
-
-        $('#resultBox')
-          .textContent =
-          encoded;
-
-      } catch {
-
-        showToast(
-          'Could not encode text.',
-          'error'
-        );
-
-      }
-
-    };
-
-
-    $('#b64d').onclick = () => {
-
-      try {
-
-        const decoded =
-          decodeURIComponent(
-            escape(
-              atob(
-                $('#baseInput')
-                  .value
-                  .trim()
-              )
-            )
-          );
-
-
-        $('#resultBox')
-          .textContent =
-          decoded;
-
-      } catch {
-
-        showToast(
-          'Invalid Base64 text.',
-          'error'
-        );
-
-      }
-
-    };
-
-  },
-
-
-  /* UUID */
-
-  uuid() {
-
-    dialogBody.innerHTML = `
-
-      <div
-        class="uuid-list"
-        id="uuidList"
-      ></div>
-
-
-      <div class="tool-actions">
-
-        <button
-          class="primary"
-          id="newUUID"
-          type="button"
-        >
-          Generate UUID
-        </button>
-
-        <button
-          id="copyUUID"
-          type="button"
-        >
-          Copy
-        </button>
-
-      </div>
-
-    `;
-
-
-    const generate = () => {
-
-      const uuid =
-        crypto.randomUUID
-          ? crypto.randomUUID()
-          : fallbackUUID();
-
-
-      $('#uuidList')
-        .textContent =
-        uuid;
-
-    };
-
-
-    generate();
-
-
-    $('#newUUID').onclick =
-      generate;
-
-
-    $('#copyUUID').onclick = () => {
-
-      navigator.clipboard
-        ?.writeText(
-          $('#uuidList')
-            .textContent
-        )
-        .then(() => {
-
-          showToast(
-            'Copied.'
-          );
-
-        })
-        .catch(() => {
-
-          showToast(
-            'Copy failed.',
-            'error'
-          );
-
-        });
-
-    };
-
-  }
-
-};
-
-
-/* =========================================================
-   UUID FALLBACK
-   ========================================================= */
-
-function fallbackUUID() {
-
-  const bytes =
-    new Uint8Array(16);
-
-
-  crypto.getRandomValues(
-    bytes
-  );
-
-
-  bytes[6] =
-    (
-      bytes[6] &
-      15
-    ) |
-    64;
-
-
-  bytes[8] =
-    (
-      bytes[8] &
-      63
-    ) |
-    128;
-
-
-  return [
-    ...bytes
-  ]
-    .map(
-      (value, index) => {
-
-        const hex =
-          value
-            .toString(16)
-            .padStart(
-              2,
-              '0'
-            );
-
-
-        return [
-          4,
-          6,
-          8,
-          10,
-          12
-        ].includes(index)
-          ? `-${hex}`
-          : hex;
-
-      }
-    )
-    .join('');
-
 }
 
 
 /* =========================================================
-   SIMPLE TEXT TOOL
-   ========================================================= */
+   TEXT TOOLS
+========================================================= */
 
-function simpleTextTool(
-  placeholder,
-  transform,
-  buttonText,
-  secondaryTransform = null,
-  secondaryText = 'Decode'
-) {
+function textTool(type) {
 
-  dialogBody.innerHTML = `
-
-    <label>
-
-      Text
-
-      <textarea
-        id="simpleInput"
-        rows="9"
-        placeholder="${escapeHTML(
-          placeholder
-        )}"
-      ></textarea>
-
-    </label>
+  const titles = {
+    counter: "Word Counter",
+    case: "Case Converter",
+    clean: "Text Cleaner",
+    duplicate: "Duplicate Remover",
+    slug: "Text → Slug"
+  };
 
 
-    <div class="text-actions">
+  openModal(`
 
-      <button
-        id="primarySimple"
-        type="button"
-      >
-        ${escapeHTML(
-          buttonText
-        )}
-      </button>
+    <h2 class="modal-title">
+      ${titles[type] || "Text Tool"}
+    </h2>
+
+    <p class="modal-subtitle">
+      Process your text directly in the browser.
+    </p>
+
+    <textarea
+      class="tool-textarea"
+      id="textInput"
+      placeholder="Type or paste your text here..."></textarea>
+
+    <div class="result-actions">
 
       ${
-        secondaryTransform
+        type === "counter"
           ? `
+            <button class="primary-btn" id="processText">
+              Count
+            </button>
+          `
+          : ""
+      }
 
-            <button
-              id="secondarySimple"
-              type="button"
-            >
-              ${escapeHTML(
-                secondaryText
-              )}
+      ${
+        type === "case"
+          ? `
+            <button class="secondary-btn" data-case="upper">
+              UPPERCASE
             </button>
 
+            <button class="secondary-btn" data-case="lower">
+              lowercase
+            </button>
+
+            <button class="secondary-btn" data-case="title">
+              Title Case
+            </button>
           `
-          : ''
+          : ""
+      }
+
+      ${
+        type === "clean"
+          ? `
+            <button class="primary-btn" id="processText">
+              Clean text
+            </button>
+          `
+          : ""
+      }
+
+      ${
+        type === "duplicate"
+          ? `
+            <button class="primary-btn" id="processText">
+              Remove duplicates
+            </button>
+          `
+          : ""
+      }
+
+      ${
+        type === "slug"
+          ? `
+            <button class="primary-btn" id="processText">
+              Create slug
+            </button>
+          `
+          : ""
       }
 
     </div>
 
-
-    ${resultBox()}
-
-  `;
+    <div id="textResult"></div>
+  `);
 
 
-  const run =
-    transformFunction => {
+  const input =
+    $("#textInput");
 
-      const value =
-        $('#simpleInput')
-          .value;
-
-
-      const output =
-        transformFunction(
-          value
-        );
+  const result =
+    $("#textResult");
 
 
-      if (
-        output === null ||
-        output === undefined
-      ) {
+  if (type === "case") {
 
-        showToast(
-          'Could not process this text.',
-          'error'
-        );
+    $$("[data-case]").forEach(btn => {
 
-        return;
+      btn.onclick = () => {
 
+        const mode =
+          btn.dataset.case;
+
+        let text =
+          input.value;
+
+        if (mode === "upper") {
+          text =
+            text.toUpperCase();
+        }
+
+        if (mode === "lower") {
+          text =
+            text.toLowerCase();
+        }
+
+        if (mode === "title") {
+          text =
+            text
+              .toLowerCase()
+              .replace(
+                /\b\w/g,
+                c => c.toUpperCase()
+              );
+        }
+
+        input.value =
+          text;
+      };
+    });
+
+    return;
+  }
+
+
+  $("#processText").onclick =
+    () => {
+
+      const text =
+        input.value;
+
+
+      if (type === "counter") {
+
+        const words =
+          text.trim()
+            ? text.trim().split(/\s+/).length
+            : 0;
+
+        const chars =
+          text.length;
+
+        const lines =
+          text
+            ? text.split(/\r?\n/).length
+            : 0;
+
+        result.innerHTML = `
+          <div class="result">
+            <strong>${words} words</strong>
+            <div class="status">
+              ${chars} characters • ${lines} lines
+            </div>
+          </div>
+        `;
       }
 
 
-      $('#resultBox')
-        .textContent =
-        output;
+      if (type === "clean") {
 
+        input.value =
+          text
+            .split(/\r?\n/)
+            .map(x => x.trim())
+            .filter(Boolean)
+            .join("\n");
+
+        result.innerHTML =
+          `<div class="result">✓ Text cleaned.</div>`;
+      }
+
+
+      if (type === "duplicate") {
+
+        const lines =
+          text.split(/\r?\n/);
+
+        const unique =
+          [...new Set(
+            lines.map(x => x.trim())
+          )].filter(Boolean);
+
+        input.value =
+          unique.join("\n");
+
+        result.innerHTML =
+          `<div class="result">
+            ✓ Duplicate lines removed.
+          </div>`;
+      }
+
+
+      if (type === "slug") {
+
+        const slug =
+          text
+            .toLowerCase()
+            .trim()
+            .replace(
+              /[^a-z0-9\s-]/g,
+              ""
+            )
+            .replace(
+              /\s+/g,
+              "-"
+            )
+            .replace(
+              /-+/g,
+              "-"
+            );
+
+        input.value =
+          slug;
+
+        result.innerHTML =
+          `<div class="result">✓ Slug created.</div>`;
+      }
+    };
+}
+
+
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+function passwordTool() {
+
+  openModal(`
+
+    <h2 class="modal-title">
+      Password Generator
+    </h2>
+
+    <p class="modal-subtitle">
+      Generate a random password locally.
+    </p>
+
+    <div class="control">
+
+      <label>
+        Length:
+        <strong id="passLengthValue">16</strong>
+      </label>
+
+      <input
+        id="passLength"
+        type="range"
+        min="6"
+        max="40"
+        value="16">
+    </div>
+
+    <div class="result">
+
+      <input
+        id="passwordOutput"
+        readonly
+        class="control input"
+        style="padding:12px;width:100%;margin-top:10px">
+
+      <div class="result-actions">
+
+        <button
+          class="primary-btn"
+          id="generatePassword">
+          Generate
+        </button>
+
+        <button
+          class="secondary-btn"
+          id="copyPassword">
+          Copy
+        </button>
+
+      </div>
+
+    </div>
+  `);
+
+
+  const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ" +
+    "abcdefghijkmnopqrstuvwxyz" +
+    "23456789" +
+    "!@#$%&*";
+
+
+  function generate() {
+
+    const length =
+      Number(
+        $("#passLength").value
+      );
+
+    let output = "";
+
+    for (
+      let i = 0;
+      i < length;
+      i++
+    ) {
+
+      output +=
+        chars[
+          Math.floor(
+            Math.random() *
+            chars.length
+          )
+        ];
+    }
+
+    $("#passwordOutput").value =
+      output;
+  }
+
+
+  $("#passLength").oninput =
+    () => {
+
+      $("#passLengthValue").textContent =
+        $("#passLength").value;
     };
 
 
-  $('#primarySimple').onclick =
-    () => run(transform);
+  $("#generatePassword").onclick =
+    generate;
 
 
-  if (secondaryTransform) {
+  $("#copyPassword").onclick =
+    async () => {
 
-    $('#secondarySimple').onclick =
-      () =>
-        run(
-          secondaryTransform
+      const value =
+        $("#passwordOutput").value;
+
+      if (!value) return;
+
+      try {
+
+        await navigator.clipboard.writeText(
+          value
         );
 
-  }
+        $("#copyPassword").textContent =
+          "Copied ✓";
 
+        setTimeout(() => {
+          $("#copyPassword").textContent =
+            "Copy";
+        }, 1200);
+
+      } catch {
+
+        showError(
+          "Copy was blocked by the browser."
+        );
+      }
+    };
+
+
+  generate();
 }
 
 
 /* =========================================================
-   TOOL EVENT SYSTEM
-   ========================================================= */
+   CALCULATOR
+========================================================= */
 
-/*
-  One event listener handles every tool button.
-  This is more reliable than attaching separate
-  handlers to every button.
-*/
+function calculatorTool() {
 
-$('#toolGrid')?.addEventListener(
-  'click',
-  event => {
+  openModal(`
 
-    const button =
-      event.target.closest(
-        '[data-action]'
-      );
+    <h2 class="modal-title">
+      Quick Calculator
+    </h2>
 
+    <p class="modal-subtitle">
+      Enter a simple mathematical expression.
+    </p>
 
-    if (!button) {
-      return;
-    }
+    <div class="control">
 
+      <input
+        id="calcInput"
+        placeholder="Example: 25 * 4 + 10">
 
-    event.preventDefault();
+    </div>
 
+    <div class="result-actions">
 
-    openDialog(
-      button.dataset.action
-    );
+      <button
+        class="primary-btn"
+        id="calculateBtn">
+        Calculate
+      </button>
 
-  }
-);
+    </div>
 
-
-/* =========================================================
-   MODAL CONTROLS
-   ========================================================= */
-
-$('#closeDialog')
-  ?.addEventListener(
-    'click',
-    closeDialog
-  );
+    <div id="calcResult"></div>
+  `);
 
 
-dialog?.addEventListener(
-  'click',
-  event => {
-
-    if (
-      event.target === dialog
-    ) {
-
-      closeDialog();
-
-    }
-
-  }
-);
-
-
-/*
-  Native dialog normally handles Escape,
-  but this makes the behavior explicit.
-*/
-
-dialog?.addEventListener(
-  'cancel',
-  event => {
-
-    event.preventDefault();
-
-    closeDialog();
-
-  }
-);
-
-
-/*
-  Error-panel close button.
-*/
-
-dialog?.addEventListener(
-  'click',
-  event => {
-
-    if (
-      event.target.closest(
-        '[data-close-dialog]'
-      )
-    ) {
-
-      closeDialog();
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   THEME
-   ========================================================= */
-
-$('#themeToggle')
-  ?.addEventListener(
-    'click',
+  $("#calculateBtn").onclick =
     () => {
 
-      document.documentElement
-        .classList.toggle(
-          'dark'
+      const expression =
+        $("#calcInput").value.trim();
+
+
+      if (!expression) {
+
+        showError(
+          "Enter a calculation."
         );
 
-
-      localStorage.setItem(
-        'filefox-theme',
-
-        document.documentElement
-          .classList
-          .contains('dark')
-          ? 'dark'
-          : 'light'
-      );
-
-    }
-  );
+        return;
+      }
 
 
-if (
-  localStorage.getItem(
-    'filefox-theme'
-  ) === 'dark'
-) {
+      /*
+        Only allow numbers and basic
+        arithmetic characters.
+      */
 
-  document.documentElement
-    .classList
-    .add('dark');
+      if (
+        !/^[0-9+\-*/().%\s]+$/
+          .test(expression)
+      ) {
 
-}
+        showError(
+          "Only basic mathematical expressions are allowed."
+        );
 
-
-/* =========================================================
-   YEAR
-   ========================================================= */
-
-$('#year').textContent =
-  new Date().getFullYear();
+        return;
+      }
 
 
-/* =========================================================
-   TOOL COUNT
-   ========================================================= */
+      try {
 
-const cards =
-  $$('.tool-card');
+        const result =
+          Function(
+            `"use strict"; return (${expression})`
+          )();
 
-
-$('#toolCount').textContent =
-  `${cards.length} tools`;
-
-
-/* =========================================================
-   SEARCH
-   ========================================================= */
-
-$('#search')
-  ?.addEventListener(
-    'input',
-    event => {
-
-      const query =
-        event.target.value
-          .toLowerCase()
-          .trim();
-
-
-      let visible = 0;
-
-
-      cards.forEach(
-        card => {
-
-          const matches =
-            !query ||
-            card.dataset.search
-              .includes(query);
-
-
-          card.hidden =
-            !matches;
-
-
-          if (matches) {
-
-            visible++;
-
-          }
-
+        if (
+          typeof result !== "number" ||
+          !Number.isFinite(result)
+        ) {
+          throw new Error();
         }
-      );
 
+        $("#calcResult").innerHTML = `
+          <div class="result">
+            <strong>${result}</strong>
+          </div>
+        `;
 
-      $('#visibleCount')
-        .textContent =
-        `${visible} shown`;
+      } catch {
 
-    }
-  );
+        showError(
+          "Invalid calculation."
+        );
+      }
+    };
+}
 
 
 /* =========================================================
-   CLEAR SEARCH
-   ========================================================= */
+   HELPERS
+========================================================= */
 
-$('#clearSearch')
-  ?.addEventListener(
-    'click',
-    () => {
+function clamp(value) {
 
-      $('#search').value = '';
-
-      $('#search')
-        .dispatchEvent(
-          new Event('input')
-        );
-
-      $('#search').focus();
-
-    }
+  return Math.max(
+    0,
+    Math.min(
+      255,
+      Math.round(value)
+    )
   );
+}
+
+
+function escapeHTML(value) {
+
+  return String(value)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+}
+
+
+function showError(message) {
+
+  const existing =
+    $("#errorBox");
+
+  if (existing) {
+    existing.remove();
+  }
+
+  const div =
+    document.createElement("div");
+
+  div.id =
+    "errorBox";
+
+  div.className =
+    "result";
+
+  div.style.marginTop =
+    "15px";
+
+  div.innerHTML =
+    `<strong>⚠️ ${escapeHTML(message)}</strong>`;
+
+  modalContent.prepend(div);
+}
+
+
+/* ---------- GLOBAL ERROR PROTECTION ---------- */
+
+window.addEventListener(
+  "error",
+  event => {
+
+    console.error(
+      "FileFox error:",
+      event.error || event.message
+    );
+  }
+);
